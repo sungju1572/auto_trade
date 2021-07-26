@@ -1,209 +1,228 @@
 import sys
-import os
+from PyQt5.QtWidgets import *
 from PyQt5.QAxContainer import *
 from PyQt5.QtCore import *
-from errCode import *
+import time
+import pandas as pd
+import sqlite3
+
+TR_REQ_TIME_INTERVAL = 0.2
 
 
-class Kiwoom(QAxWidget): #QAxWidget 상속받음
+class Kiwoom(QAxWidget):
     def __init__(self):
         super().__init__()
+        self._create_kiwoom_instance()
+        self._set_signal_slots()
+        
+    #COM오브젝트 생성
+    def _create_kiwoom_instance(self):
+        self.setControl("KHOPENAPI.KHOpenAPICtrl.1") #고유 식별자 가져옴
+
+    #이벤트 처리
+    def _set_signal_slots(self):
+        self.OnEventConnect.connect(self._event_connect) # 로그인 관련 이벤트 (.connect()는 이벤트와 슬롯을 연결하는 역할)
+        self.OnReceiveTrData.connect(self._receive_tr_data) # 트랜잭션 요청 관련 이벤트
+        self.OnReceiveChejanData.connect(self._receive_chejan_data) #체결잔고 요청 이벤트
+
+    #로그인
+    def comm_connect(self):
+        self.dynamicCall("CommConnect()") # CommConnect() 시그널 함수 호출(.dynamicCall()는 서버에 데이터를 송수신해주는 기능)
         self.login_event_loop = QEventLoop() # 로그인 담당 이벤트 루프(프로그램이 종료되지 않게하는 큰 틀의 루프)
-        self.get_deposit_loop = QEventLoop()  # 예수금 담당 이벤트 루프
-        self.get_account_evaluation_balance_loop = QEventLoop() # 계좌 담당 이벤트 루프
-        
-        
-        # 계좌 관련 변수
-        self.account_number = None
-        self.total_buy_money = 0
-        self.total_evaluation_money = 0
-        self.total_evaluation_profit_and_loss_money = 0
-        self.total_yield = 0
-        
-        # 예수금 관련 변수
-        self.deposit = 0
-        self.withdraw_deposit = 0
-        self.order_deposit = 0
-
-        # 화면 번호
-        self.screen_my_account = "1000"
-
-
-        # 초기 작업
-        self.create_kiwoom_instance()
-        self.event_collection()  # 이벤트와 슬롯을 메모리에 먼저 생성
-        self.login()
-        input() #스페이스바 입력
-        self.get_account_info()  # 계좌 번호만 얻어오기
-        self.get_deposit_info()  # 예수금 관련된 정보 얻어오기
-
-        self.menu()
-        
-        
-    # COM 오브젝트 생성
-    def create_kiwoom_instance(self):
-        # 레지스트리에 저장된 키움 openAPI 모듈 불러오기
-        self.setControl("KHOPENAPI.KHOpenAPICtrl.1") #고유식별자 가져옴
-        
-    # 이벤트 처리
-    def event_collection(self):
-        self.OnEventConnect.connect(self.login_slot)  # 로그인 관련 이벤트 (.connect()는 이벤트와 슬롯을 연결하는 역할)
-        self.OnReceiveTrData.connect(self.tr_slot)  # 트랜잭션 요청 관련 이벤트
-
-    #로그인 
-    def login(self):
-        self.dynamicCall("CommConnect()")  # CommConnect() 시그널 함수 호출(.dynamicCall()는 서버에 데이터를 송수신해주는 기능)
         self.login_event_loop.exec_() #exec_()를 통해 이벤트 루프 실행  (다른데이터 간섭 막기)
-    
-    #로그인 성공 실패여부 
-    def login_slot(self, err_code):
+
+    #이벤트 연결 여부
+    def _event_connect(self, err_code):
         if err_code == 0:
-            print("로그인에 성공하였습니다.")
+            print("connected")
         else:
-            if err_code == -106:  # 사용자가 강제로 키움api 프로그램을 종료하였을 경우
-                os.system('cls')
-                print(errors(err_code)[1])
-                sys.exit(0)
-            os.system('cls')
-            print("로그인에 실패하였습니다.")
-            print("에러 내용 :", errors(err_code)[1])
-            sys.exit(0)
-        self.login_event_loop.exit() #exit()를 통해 이벤트 루프 종료
- 
-    #계좌 받아오기 
-    def get_account_info(self):
-        account_list = self.dynamicCall("GetLoginInfo(QString)", "ACCLIST") #전체계좌 목록 반환 
-        account_number = account_list.split(';')[0] #세미콜론 기준으로 첫번째 계좌 선택
-        self.account_number = account_number #멤버 변수에 할당(초기화)
-      
-    
-    #기타 개인정보
-    def menu(self):
-        sel = ""
-        while True:
-            os.system('cls') #화면 깨끗하게 비우기
-            print("1. 현재 로그인 상태 확인")
-            print("2. 사용자 정보 조회")
-            print("3. 예수금 조회")
-            print("4. 계좌 잔고 조회")
-            print("Q. 프로그램 종료")
-            sel = input("=> ")
+            print("disconnected")
 
-            if sel == "Q" or sel == "q": #Q누르면 종료
-                sys.exit(0)
+        self.login_event_loop.exit()
 
-            if sel == "1":
-                self.print_login_connect_state()
-            elif sel == "2":
-                self.print_my_info()
-            elif sel == "3":
-                self.print_get_deposit_info()
-            elif sel == "4":
-                self.print_get_account_evaulation_balance_info()
+    #종목리스트 반환
+    def get_code_list_by_market(self, market):
+        code_list = self.dynamicCall("GetCodeListByMarket(QString)", market) #종목리스트 호출
+        code_list = code_list.split(';')
+        return code_list[:-1]
 
-    #로그인 상태확인
-    def print_login_connect_state(self):
-        os.system('cls')
-        isLogin = self.dynamicCall("GetConnectState()") #로그인 상태 반환 1,0
-        if isLogin == 1:
-            print("\n현재 계정은 로그인 상태입니다.")
+    #종목명 반환
+    def get_master_code_name(self, code):
+        code_name = self.dynamicCall("GetMasterCodeName(QString)", code) #종목명 호출
+        return code_name
+
+    #통신접속상태 반환
+    def get_connect_state(self):
+        ret = self.dynamicCall("GetConnectState()") #통신접속상태 호출
+        return ret
+
+    #로그인정보 반환
+    def get_login_info(self, tag):
+        ret = self.dynamicCall("GetLoginInfo(QString)", tag) #로그인정보 호출
+        return ret
+
+    #초기 계좌번호 할당
+    def set_input_value(self, id, value):
+        self.dynamicCall("SetInputValue(QString, QString)", id, value)
+
+    #통신데이터 수신
+    def comm_rq_data(self, rqname, trcode, next, screen_no):
+        self.dynamicCall("CommRqData(QString, QString, int, QString)", rqname, trcode, next, screen_no)
+        self.tr_event_loop = QEventLoop()
+        self.tr_event_loop.exec_()
+
+    def _comm_get_data(self, code, real_type, field_name, index, item_name):
+        ret = self.dynamicCall("CommGetData(QString, QString, QString, int, QString)", code,
+                               real_type, field_name, index, item_name)
+        return ret.strip()
+
+    def _get_repeat_cnt(self, trcode, rqname):
+        ret = self.dynamicCall("GetRepeatCnt(QString, QString)", trcode, rqname)
+        return ret
+
+    def send_order(self, rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no):
+        self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
+                         [rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no])
+
+    def get_chejan_data(self, fid):
+        ret = self.dynamicCall("GetChejanData(int)", fid)
+        return ret
+
+    def get_server_gubun(self):
+        ret = self.dynamicCall("KOA_Functions(QString, QString)", "GetServerGubun", "")
+        return ret
+
+    def _receive_chejan_data(self, gubun, item_cnt, fid_list):
+        print(gubun)
+        print(self.get_chejan_data(9203))
+        print(self.get_chejan_data(302))
+        print(self.get_chejan_data(900))
+        print(self.get_chejan_data(901))
+
+    def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
+        if next == '2':
+            self.remained_data = True
         else:
-            print("\n현재 계정은 로그아웃 상태입니다.")
-        input()
+            self.remained_data = False
 
-    #내정보
-    def print_my_info(self):
-        os.system('cls')
-        user_name = self.dynamicCall("GetLoginInfo(QString)", "USER_NAME")
-        user_id = self.dynamicCall("GetLoginInfo(QString)", "USER_ID")
-        account_count = self.dynamicCall(
-            "GetLoginInfo(QString)", "ACCOUNT_CNT")
+        if rqname == "opt10081_req":
+            self._opt10081(rqname, trcode)
+        elif rqname == "opw00001_req":
+            self._opw00001(rqname, trcode)
+        elif rqname == "opw00018_req":
+            self._opw00018(rqname, trcode)
 
-        print(f"\n이름 : {user_name}")
-        print(f"ID : {user_id}")
-        print(f"보유 계좌 수 : {account_count}")
-        print(f"1번째 계좌번호 : {self.account_number}")
-        input()
+        try:
+            self.tr_event_loop.exit()
+        except AttributeError:
+            pass
 
-    #예수금 정보 출력
-    def print_get_deposit_info(self):
-        os.system('cls')
-        print(f"\n예수금 : {self.deposit}원")
-        print(f"출금 가능 금액 : {self.withdraw_deposit}원")
-        print(f"주문 가능 금액 : {self.order_deposit}원")
-        input()
+    @staticmethod
+    def change_format(data):
+        strip_data = data.lstrip('-0')
+        if strip_data == '' or strip_data == '.00':
+            strip_data = '0'
 
-    #계좌 정보 출력
-    def print_get_account_evaulation_balance_info(self):
-        os.system('cls')
-        print("\n<싱글데이터>")
-        print(f"총매입금액 : {self.total_buy_money}원")
-        print(f"총평가금액 : {self.total_evaluation_money}원")
-        print(f"총평가손익금액 : {self.total_evaluation_profit_and_loss_money}원")
-        print(f"총수익률 : {self.total_yield}%")
-        input()
+        try:
+            format_data = format(int(strip_data), ',d')
+        except:
+            format_data = format(float(strip_data))
+        if data.startswith('-'):
+            format_data = '-' + format_data
 
+        return format_data
 
-    #예수금 정보 입력 받기
-    def get_deposit_info(self, nPrevNext=0): #입력값 : 계좌번호, 비밀번호, 비밀번호매체구분, 조회구분
-        self.dynamicCall("SetInputValue(QString, QString)", #SetInputValue()안에 넣어서 서버에 데이터 송신
-                         "계좌번호", self.account_number)
-        self.dynamicCall("SetInputValue(QString, QString)", "비밀번호", " ")
-        self.dynamicCall("SetInputValue(QString, QString)", "비밀번호입력매체구분", "00")
-        self.dynamicCall("SetInputValue(QString, QString)", "조회구분", "2") #2는 모든 페이지
-        self.dynamicCall("CommRqData(QString, QString, int, QString)",
-                         "예수금상세현황요청", "opw00001", nPrevNext, self.screen_my_account) #opw00001 : 예수금 관련 tr 
+    @staticmethod
+    def change_format2(data):
+        strip_data = data.lstrip('-0')
 
-        self.get_deposit_loop.exec_()
+        if strip_data == '':
+            strip_data = '0'
 
-    #계좌 정보 입력 받기(이벤트 루프)
-    def get_account_evaluation_balance(self, nPrevNext=0):
-        self.dynamicCall("SetInputValue(QString, QString)",
-                         "계좌번호", self.account_number)
-        self.dynamicCall("SetInputValue(QString, QString)", "비밀번호", " ")
-        self.dynamicCall("SetInputValue(QString, QString)", "비밀번호입력매체구분", "00")
-        self.dynamicCall("SetInputValue(QString, QString)", "조회구분", "1")
-        self.dynamicCall("CommRqData(QString, QString, int, QString)",
-                         "계좌평가잔고내역요청", "opw00018", nPrevNext, self.screen_my_account)
+        if strip_data.startswith('.'):
+            strip_data = '0' + strip_data
 
-        self.get_account_evaluation_balance_loop.exec_()
+        if data.startswith('-'):
+            strip_data = '-' + strip_data
 
-    #트렌젝션 이벤트
-    def tr_slot(self, sScrNo, sRQName, sTrCode, sRecordName, sPrevNext):
-        if sRQName == "예수금상세현황요청":
-            deposit = self.dynamicCall(
-                "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "예수금")
-            self.deposit = int(deposit)
+        return strip_data
 
-            withdraw_deposit = self.dynamicCall(
-                "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "출금가능금액")
-            self.withdraw_deposit = int(withdraw_deposit)
+    def _opw00001(self, rqname, trcode):
+        d2_deposit = self._comm_get_data(trcode, "", rqname, 0, "d+2추정예수금")
+        self.d2_deposit = Kiwoom.change_format(d2_deposit)
 
-            order_deposit = self.dynamicCall(
-                "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "주문가능금액")
-            self.order_deposit = int(order_deposit)
-            self.cancel_screen_number(self.screen_my_account)
-            self.get_deposit_loop.exit()
+    def _opt10081(self, rqname, trcode):
+        data_cnt = self._get_repeat_cnt(trcode, rqname)
 
-        elif sRQName == "계좌평가잔고내역요청":
-            total_buy_money = self.dynamicCall(
-                "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "총매입금액")
-            self.total_sell_money = int(total_buy_money)
+        for i in range(data_cnt):
+            date = self._comm_get_data(trcode, "", rqname, i, "일자")
+            open = self._comm_get_data(trcode, "", rqname, i, "시가")
+            high = self._comm_get_data(trcode, "", rqname, i, "고가")
+            low = self._comm_get_data(trcode, "", rqname, i, "저가")
+            close = self._comm_get_data(trcode, "", rqname, i, "현재가")
+            volume = self._comm_get_data(trcode, "", rqname, i, "거래량")
 
-            total_evaluation_money = self.dynamicCall(
-                "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "총평가금액")
-            self.total_evaluation_money = int(total_evaluation_money)
+            self.ohlcv['date'].append(date)
+            self.ohlcv['open'].append(int(open))
+            self.ohlcv['high'].append(int(high))
+            self.ohlcv['low'].append(int(low))
+            self.ohlcv['close'].append(int(close))
+            self.ohlcv['volume'].append(int(volume))
 
-            total_evaluation_profit_and_loss_money = self.dynamicCall(
-                "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "총평가손익금액")
-            self.total_evaluation_profit_and_loss_money = int(
-                total_evaluation_profit_and_loss_money)
+    def reset_opw00018_output(self):
+        self.opw00018_output = {'single': [], 'multi': []}
 
-            total_yield = self.dynamicCall(
-                "GetCommData(QString, QString, int, QString)", sTrCode, sRQName, 0, "총수익률(%)")
-            self.total_yield = float(total_yield)
-            self.cancel_screen_number(self.screen_my_account)
-            self.get_account_evaluation_balance_loop.exit()
+    def _opw00018(self, rqname, trcode):
+        # single data
+        total_purchase_price = self._comm_get_data(trcode, "", rqname, 0, "총매입금액")
+        total_eval_price = self._comm_get_data(trcode, "", rqname, 0, "총평가금액")
+        total_eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, 0, "총평가손익금액")
+        total_earning_rate = self._comm_get_data(trcode, "", rqname, 0, "총수익률(%)")
+        estimated_deposit = self._comm_get_data(trcode, "", rqname, 0, "추정예탁자산")
 
-    def cancel_screen_number(self, sScrNo):
-        self.dynamicCall("DisconnectRealData(QString)", sScrNo)
+        self.opw00018_output['single'].append(Kiwoom.change_format(total_purchase_price))
+        self.opw00018_output['single'].append(Kiwoom.change_format(total_eval_price))
+        self.opw00018_output['single'].append(Kiwoom.change_format(total_eval_profit_loss_price))
+
+        total_earning_rate = Kiwoom.change_format(total_earning_rate)
+
+        if self.get_server_gubun():
+            total_earning_rate = float(total_earning_rate) / 100
+            total_earning_rate = str(total_earning_rate)
+
+        self.opw00018_output['single'].append(total_earning_rate)
+
+        self.opw00018_output['single'].append(Kiwoom.change_format(estimated_deposit))
+
+        # multi data
+        rows = self._get_repeat_cnt(trcode, rqname)
+        for i in range(rows):
+            name = self._comm_get_data(trcode, "", rqname, i, "종목명")
+            quantity = self._comm_get_data(trcode, "", rqname, i, "보유수량")
+            purchase_price = self._comm_get_data(trcode, "", rqname, i, "매입가")
+            current_price = self._comm_get_data(trcode, "", rqname, i, "현재가")
+            eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, i, "평가손익")
+            earning_rate = self._comm_get_data(trcode, "", rqname, i, "수익률(%)")
+
+            quantity = Kiwoom.change_format(quantity)
+            purchase_price = Kiwoom.change_format(purchase_price)
+            current_price = Kiwoom.change_format(current_price)
+            eval_profit_loss_price = Kiwoom.change_format(eval_profit_loss_price)
+            earning_rate = Kiwoom.change_format2(earning_rate)
+
+            self.opw00018_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price,
+                                                  earning_rate])
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    kiwoom = Kiwoom()
+    kiwoom.comm_connect() #연결
+
+    kiwoom.reset_opw00018_output()
+    account_number = kiwoom.get_login_info("ACCNO")
+    account_number = account_number.split(';')[0]
+
+    kiwoom.set_input_value("계좌번호", account_number)
+    kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
+    print(kiwoom.opw00018_output['single'])
+    print(kiwoom.opw00018_output['multi'])
