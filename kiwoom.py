@@ -63,19 +63,21 @@ class Kiwoom(QAxWidget):
 
     #초기 계좌번호 할당
     def set_input_value(self, id, value):
-        self.dynamicCall("SetInputValue(QString, QString)", id, value)
+        self.dynamicCall("SetInputValue(QString, QString)", id, value) #SetInputValue() 밸류값으로 원하는값지정 ex) SetInputValue("비밀번호"	,  "")
 
-    #통신데이터 수신
+    #통신데이터 수신(tr)
     def comm_rq_data(self, rqname, trcode, next, screen_no):
-        self.dynamicCall("CommRqData(QString, QString, int, QString)", rqname, trcode, next, screen_no)
+        self.dynamicCall("CommRqData(QString, QString, int, QString)", rqname, trcode, next, screen_no) 
         self.tr_event_loop = QEventLoop()
         self.tr_event_loop.exec_()
 
-    def _comm_get_data(self, code, real_type, field_name, index, item_name):
-        ret = self.dynamicCall("CommGetData(QString, QString, QString, int, QString)", code,
+    #실제 데이터 가져오기
+    def _comm_get_data(self, code, real_type, field_name, index, item_name): 
+        ret = self.dynamicCall("CommGetData(QString, QString, QString, int, QString)", code, #더이상 지원 안함??
                                real_type, field_name, index, item_name)
         return ret.strip()
 
+    #수신받은 데이터 반복횟수
     def _get_repeat_cnt(self, trcode, rqname):
         ret = self.dynamicCall("GetRepeatCnt(QString, QString)", trcode, rqname)
         return ret
@@ -99,12 +101,14 @@ class Kiwoom(QAxWidget):
         print(self.get_chejan_data(900))
         print(self.get_chejan_data(901))
 
+    #받은 tr데이터가 무엇인지, 연속조회 할수있는지
     def _receive_tr_data(self, screen_no, rqname, trcode, record_name, next, unused1, unused2, unused3, unused4):
-        if next == '2':
+        if next == '2': 
             self.remained_data = True
         else:
             self.remained_data = False
-
+            
+        #받은 tr에따라 각각의 함수 호출
         if rqname == "opt10081_req":
             self._opt10081(rqname, trcode)
         elif rqname == "opw00001_req":
@@ -151,10 +155,11 @@ class Kiwoom(QAxWidget):
         d2_deposit = self._comm_get_data(trcode, "", rqname, 0, "d+2추정예수금")
         self.d2_deposit = Kiwoom.change_format(d2_deposit)
 
-    def _opt10081(self, rqname, trcode):
-        data_cnt = self._get_repeat_cnt(trcode, rqname)
 
-        for i in range(data_cnt):
+    def _opt10081(self, rqname, trcode):
+        data_cnt = self._get_repeat_cnt(trcode, rqname) #데이터 갯수 확인
+
+        for i in range(data_cnt): #시고저종 거래량 가져오기
             date = self._comm_get_data(trcode, "", rqname, i, "일자")
             open = self._comm_get_data(trcode, "", rqname, i, "시가")
             high = self._comm_get_data(trcode, "", rqname, i, "고가")
