@@ -115,6 +115,8 @@ class Kiwoom(QAxWidget):
             self._opw00001(rqname, trcode)
         elif rqname == "opw00018_req":
             self._opw00018(rqname, trcode)
+        elif rqname == "opw20006_req":
+            self._opw20006(rqname, trcode)
 
         try:
             self.tr_event_loop.exit()
@@ -218,6 +220,55 @@ class Kiwoom(QAxWidget):
             self.opw00018_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price,
                                                   earning_rate])
 
+
+#8월2일 수정본
+    def reset_opw20006_output(self):
+        self.opw20006_output = {'single': [], 'multi': []}
+        
+        
+    def _opw20006(self, rqname, trcode):
+        # single data
+        total_purchase_price = self._comm_get_data(trcode, "", rqname, 0, "총매입금액")
+        total_eval_price = self._comm_get_data(trcode, "", rqname, 0, "총평가금액")
+        total_eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, 0, "총평가손익금액")
+        total_earning_rate = self._comm_get_data(trcode, "", rqname, 0, "총수익률(%)")
+        estimated_deposit = self._comm_get_data(trcode, "", rqname, 0, "추정예탁자산")
+
+        self.opw20006_output['single'].append(Kiwoom.change_format(total_purchase_price))
+        self.opw20006_output['single'].append(Kiwoom.change_format(total_eval_price))
+        self.opw20006_output['single'].append(Kiwoom.change_format(total_eval_profit_loss_price))
+
+        total_earning_rate = Kiwoom.change_format(total_earning_rate)
+
+        if self.get_server_gubun():
+            total_earning_rate = float(total_earning_rate) / 100
+            total_earning_rate = str(total_earning_rate)
+
+        self.opw20006_output['single'].append(total_earning_rate)
+
+        self.opw20006_output['single'].append(Kiwoom.change_format(estimated_deposit))
+
+        # multi data
+        rows = self._get_repeat_cnt(trcode, rqname)
+        for i in range(rows):
+            name = self._comm_get_data(trcode, "", rqname, i, "종목명")
+            quantity = self._comm_get_data(trcode, "", rqname, i, "보유수량")
+            purchase_price = self._comm_get_data(trcode, "", rqname, i, "매입가")
+            current_price = self._comm_get_data(trcode, "", rqname, i, "현재가")
+            eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, i, "평가손익")
+            earning_rate = self._comm_get_data(trcode, "", rqname, i, "수익률(%)")
+
+            quantity = Kiwoom.change_format(quantity)
+            purchase_price = Kiwoom.change_format(purchase_price)
+            current_price = Kiwoom.change_format(current_price)
+            eval_profit_loss_price = Kiwoom.change_format(eval_profit_loss_price)
+            earning_rate = Kiwoom.change_format2(earning_rate)
+
+            self.opw20006_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price,
+                                                  earning_rate])
+        
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     kiwoom = Kiwoom()
@@ -228,6 +279,7 @@ if __name__ == "__main__":
     account_number = account_number.split(';')[0]
 
     kiwoom.set_input_value("계좌번호", account_number)
-    kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
+    kiwoom.comm_rq_data("opw20006_req", "opw20006", 0, "2000")
+    #kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
     print(kiwoom.opw00018_output['single'])
     print(kiwoom.opw00018_output['multi'])
