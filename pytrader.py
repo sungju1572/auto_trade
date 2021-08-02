@@ -34,6 +34,7 @@ class MyWindow(QMainWindow, form_class):
         self.lineEdit.textChanged.connect(self.code_changed)
         self.pushButton.clicked.connect(self.send_order)
         self.pushButton_2.clicked.connect(self.check_balance)
+        self.pushButton_4.clicked.connect(self.check_balance_2)
 
         self.load_buy_sell_list()
 
@@ -204,6 +205,47 @@ class MyWindow(QMainWindow, form_class):
 
         for j in range(item_count):
             row = self.kiwoom.opw00018_output['multi'][j]
+            for i in range(len(row)):
+                item = QTableWidgetItem(row[i])
+                item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+                self.tableWidget_2.setItem(j, i, item)
+
+        self.tableWidget_2.resizeRowsToContents()
+        
+    def check_balance_2(self):
+        self.kiwoom.reset_opw20006_output()
+        account_number = self.comboBox.currentText()
+
+        self.kiwoom.set_input_value("계좌번호", account_number)
+        self.kiwoom.comm_rq_data("opw20006_req", "opw20006", 0, "2000")
+
+        while self.kiwoom.remained_data:
+            time.sleep(0.2)
+            self.kiwoom.set_input_value("계좌번호", account_number)
+            self.kiwoom.comm_rq_data("opw20006_req", "opw20006", 0, "2000")
+            
+        # opw00001
+        self.kiwoom.set_input_value("계좌번호", account_number)
+        self.kiwoom.comm_rq_data("opw00001_req", "opw00001", 0, "2000")
+
+        # balance
+        item = QTableWidgetItem(self.kiwoom.d2_deposit)
+        item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        self.tableWidget.setItem(0, 0, item)
+
+        for i in range(1, 6):
+            item = QTableWidgetItem(self.kiwoom.opw20006_output['single'][i - 1])
+            item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+            self.tableWidget.setItem(0, i, item)
+
+        self.tableWidget.resizeRowsToContents()
+
+        # Item list
+        item_count = len(self.kiwoom.opw20006_output['multi'])
+        self.tableWidget_2.setRowCount(item_count)
+
+        for j in range(item_count):
+            row = self.kiwoom.opw20006_output['multi'][j]
             for i in range(len(row)):
                 item = QTableWidgetItem(row[i])
                 item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
