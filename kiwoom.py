@@ -76,15 +76,28 @@ class Kiwoom(QAxWidget):
         ret = self.dynamicCall("CommGetData(QString, QString, QString, int, QString)", code, #더이상 지원 안함??
                                real_type, field_name, index, item_name)
         return ret.strip()
-
+    """  
+    #ㅅ조회정보요청??
+    def _get_comm_data(self, trcode, rqname, index, item_name):
+        ret = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, 
+                                rqname, index, item_name)
+        return ret.strip()
+    """
     #수신받은 데이터 반복횟수
     def _get_repeat_cnt(self, trcode, rqname):
         ret = self.dynamicCall("GetRepeatCnt(QString, QString)", trcode, rqname)
         return ret
 
+    #주문 (주식)
     def send_order(self, rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no):
         self.dynamicCall("SendOrder(QString, QString, QString, int, QString, int, int, QString, QString)",
                          [rqname, screen_no, acc_no, order_type, code, quantity, price, hoga, order_no])
+        
+    #주문 (선물)    
+    def send_order_fo(self, rqname, screen_no, acc_no,  code, order_type, slbytp, hoga, quantity, price, order_no):
+        self.dynamicCall("SendOrderFO(QString, QString, QString, QString, int, QString, QString, int, QString, QString)",
+                         [rqname, screen_no, acc_no, code, order_type, slbytp, hoga, quantity, price, order_no])
+
 
     def get_chejan_data(self, fid):
         ret = self.dynamicCall("GetChejanData(int)", fid)
@@ -124,6 +137,7 @@ class Kiwoom(QAxWidget):
             pass
 
     @staticmethod
+    #입력받은데이터 정제    
     def change_format(data):
         strip_data = data.lstrip('-0')
         if strip_data == '' or strip_data == '.00':
@@ -138,6 +152,7 @@ class Kiwoom(QAxWidget):
 
         return format_data
 
+    #입력받은데이터(수익률) 정제
     @staticmethod
     def change_format2(data):
         strip_data = data.lstrip('-0')
@@ -176,9 +191,11 @@ class Kiwoom(QAxWidget):
             self.ohlcv['close'].append(int(close))
             self.ohlcv['volume'].append(int(volume))
 
+    #opw박스 초기화 (주식)
     def reset_opw00018_output(self):
         self.opw00018_output = {'single': [], 'multi': []}
 
+    #여러 정보들 저장 (주식)
     def _opw00018(self, rqname, trcode):
         # single data
         total_purchase_price = self._comm_get_data(trcode, "", rqname, 0, "총매입금액")
@@ -220,19 +237,18 @@ class Kiwoom(QAxWidget):
             self.opw00018_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price,
                                                   earning_rate])
 
-
-#8월2일 수정본
+    #opw박스 초기화(선물)
     def reset_opw20006_output(self):
         self.opw20006_output = {'single': [], 'multi': []}
         
-        
+    #여러 정보들 저장 (선물)
     def _opw20006(self, rqname, trcode):
         # single data
         total_purchase_price = self._comm_get_data(trcode, "", rqname, 0, "총매입금액")
         total_eval_price = self._comm_get_data(trcode, "", rqname, 0, "총평가금액")
         total_eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, 0, "총평가손익금액")
         total_earning_rate = self._comm_get_data(trcode, "", rqname, 0, "총수익률(%)")
-        estimated_deposit = self._comm_get_data(trcode, "", rqname, 0, "추정예탁자산")
+        estimated_deposit = self._comm_get_data(trcode, "", rqname, 0, "추정예탁자산")        
 
         self.opw20006_output['single'].append(Kiwoom.change_format(total_purchase_price))
         self.opw20006_output['single'].append(Kiwoom.change_format(total_eval_price))
@@ -252,11 +268,11 @@ class Kiwoom(QAxWidget):
         rows = self._get_repeat_cnt(trcode, rqname)
         for i in range(rows):
             name = self._comm_get_data(trcode, "", rqname, i, "종목명")
-            quantity = self._comm_get_data(trcode, "", rqname, i, "보유수량")
-            purchase_price = self._comm_get_data(trcode, "", rqname, i, "매입가")
+            quantity = self._comm_get_data(trcode, "", rqname, i, "잔고수량")
+            purchase_price = self._comm_get_data(trcode, "", rqname, i, "매입단가")
             current_price = self._comm_get_data(trcode, "", rqname, i, "현재가")
             eval_profit_loss_price = self._comm_get_data(trcode, "", rqname, i, "평가손익")
-            earning_rate = self._comm_get_data(trcode, "", rqname, i, "수익률(%)")
+            earning_rate = self._comm_get_data(trcode, "", rqname, i, "손익율")
 
             quantity = Kiwoom.change_format(quantity)
             purchase_price = Kiwoom.change_format(purchase_price)
@@ -267,6 +283,7 @@ class Kiwoom(QAxWidget):
             self.opw20006_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price,
                                                   earning_rate])
         
+        
 
 
 if __name__ == "__main__":
@@ -275,11 +292,21 @@ if __name__ == "__main__":
     kiwoom.comm_connect() #연결
 
     kiwoom.reset_opw00018_output()
+    kiwoom.reset_opw20006_output()
     account_number = kiwoom.get_login_info("ACCNO")
     account_number = account_number.split(';')[0]
 
     kiwoom.set_input_value("계좌번호", account_number)
     kiwoom.comm_rq_data("opw20006_req", "opw20006", 0, "2000")
     #kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
-    print(kiwoom.opw00018_output['single'])
-    print(kiwoom.opw00018_output['multi'])
+    print(kiwoom.opw20006_output['single'])
+    print(kiwoom.opw20006_output['multi'])
+    
+#    kiwoom.send_order("send_order_req", "0101", "8004269811", 1, "000660", 2, "0","03","")
+  #  kiwoom.send_order_fo("send_order_fo_req", "0101", "7001076831", "101RR000", 1, "2", "3", 1, "0", "")
+
+#    def send_order_fo(self, rqname, screen_no, acc_no,  code, order_type, slbytp, hoga, quantity, price, order_no):
+ #       self.dynamicCall("SendOrderFO(QString, QString, QString, QString, int, int, QString, int, int, QString)",
+  #                       [rqname, screen_no, acc_no, code, order_type, slbytp, hoga, quantity, price, order_no]
+  
+  
