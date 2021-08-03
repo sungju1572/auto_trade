@@ -14,7 +14,7 @@ class MyWindow(QMainWindow, form_class):
 
         self.trade_stocks_done = False
 
-        self.kiwoom = Kiwoom()
+        self.kiwoom = Kiwoom() #객체생성
         self.kiwoom.comm_connect() #연결
 
         self.timer = QTimer(self)
@@ -33,11 +33,13 @@ class MyWindow(QMainWindow, form_class):
 
         self.lineEdit.textChanged.connect(self.code_changed)
         self.pushButton.clicked.connect(self.send_order)
+        self.pushButton_5.clicked.connect(self.send_order_fo)
         self.pushButton_2.clicked.connect(self.check_balance)
         self.pushButton_4.clicked.connect(self.check_balance_2)
 
         self.load_buy_sell_list()
 
+    #자동주문
     def trade_stocks(self):
         hoga_lookup = {'지정가': "00", '시장가': "03"}
 
@@ -135,6 +137,8 @@ class MyWindow(QMainWindow, form_class):
         name = self.kiwoom.get_master_code_name(code)
         self.lineEdit_2.setText(name)
 
+
+    #주문 (주식)
     def send_order(self):
         order_type_lookup = {'신규매수': 1, '신규매도': 2, '매수취소': 3, '매도취소': 4}
         hoga_lookup = {'지정가': "00", '시장가': "03"}
@@ -148,6 +152,24 @@ class MyWindow(QMainWindow, form_class):
 
         self.kiwoom.send_order("send_order_req", "0101", account, order_type_lookup[order_type], code, num, price, hoga_lookup[hoga], "")
 
+    #주문 (선물)
+    def send_order_fo(self):
+        order_type_lookup = {'신규매매': 1, '정정': 2, '취소': 3}
+        slbytp_lookup = {"매도" : "1", "매수" : "2"}
+        hoga_lookup = {'지정가': "1", '시장가': "3"}
+
+        account = self.comboBox.currentText()
+        code = self.lineEdit.text()
+        order_type = self.comboBox_4.currentText()
+        slbytp = self.comboBox_5.currentText()
+        hoga = self.comboBox_6.currentText()
+        num = self.spinBox.value()
+        price = self.spinBox_2.value()
+
+        self.kiwoom.send_order_fo("send_order_fo_req", "0101", account, code, order_type_lookup[order_type], slbytp_lookup[slbytp], hoga_lookup[hoga], num, price, "")
+
+
+    #서버연결
     def timeout(self):
         market_start_time = QTime(9, 0, 0)
         current_time = QTime.currentTime()
