@@ -61,7 +61,7 @@ class Kiwoom(QAxWidget):
         ret = self.dynamicCall("GetLoginInfo(QString)", tag) #로그인정보 호출
         return ret
 
-    #초기 계좌번호 할당
+    #TR별 할당값 지정하기
     def set_input_value(self, id, value):
         self.dynamicCall("SetInputValue(QString, QString)", id, value) #SetInputValue() 밸류값으로 원하는값지정 ex) SetInputValue("비밀번호"	,  "")
 
@@ -98,7 +98,12 @@ class Kiwoom(QAxWidget):
         self.dynamicCall("SendOrderFO(QString, QString, QString, QString, int, QString, QString, int, QString, QString)",
                          [rqname, screen_no, acc_no, code, order_type, slbytp, hoga, quantity, price, order_no])
 
+    #현재가 데이터
+    def get_comm_real_data(self, trcode, fid):
+        ret = self.dynamicCall("GetCommRealData(QString, int)", trcode, fid)
+        return ret
 
+    #체결정보
     def get_chejan_data(self, fid):
         ret = self.dynamicCall("GetChejanData(int)", fid)
         return ret
@@ -130,6 +135,9 @@ class Kiwoom(QAxWidget):
             self._opw00018(rqname, trcode)
         elif rqname == "opw20006_req":
             self._opw20006(rqname, trcode)
+        elif rqname == "opt50001_req":
+            self._opt50001(rqname, trcode)
+            
 
         try:
             self.tr_event_loop.exit()
@@ -283,8 +291,12 @@ class Kiwoom(QAxWidget):
             self.opw20006_output['multi'].append([name, quantity, purchase_price, current_price, eval_profit_loss_price,
                                                   earning_rate])
         
+    
         
-
+        
+    def _opt50001(self, rqname, trcode):
+        a = self.get_comm_real_data(trcode, "10")
+        return a
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -296,12 +308,14 @@ if __name__ == "__main__":
     account_number = kiwoom.get_login_info("ACCNO")
     account_number = account_number.split(';')[0]
 
-    kiwoom.set_input_value("계좌번호", account_number)
-    kiwoom.comm_rq_data("opw20006_req", "opw20006", 0, "2000")
-    #kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
-    print(kiwoom.opw20006_output['single'])
-    print(kiwoom.opw20006_output['multi'])
-    
+#    kiwoom.set_input_value("계좌번호", account_number)
+#    kiwoom.comm_rq_data("opw20006_req", "opw20006", 0, "2000")
+#    #kiwoom.comm_rq_data("opw00018_req", "opw00018", 0, "2000")
+#    print(kiwoom.opw20006_output['single'])
+#    print(kiwoom.opw20006_output['multi'])
+
+
+#    print(kiwoom.GetCommRealData("000660", 10))
 #    kiwoom.send_order("send_order_req", "0101", "8004269811", 1, "000660", 2, "0","03","")
   #  kiwoom.send_order_fo("send_order_fo_req", "0101", "7001076831", "101RR000", 1, "2", "3", 1, "0", "")
 
@@ -309,4 +323,8 @@ if __name__ == "__main__":
  #       self.dynamicCall("SendOrderFO(QString, QString, QString, QString, int, int, QString, int, int, QString)",
   #                       [rqname, screen_no, acc_no, code, order_type, slbytp, hoga, quantity, price, order_no]
   
+  
+    kiwoom.set_input_value("종목코드", "000660")
+    kiwoom.comm_rq_data("opt50001_req", "opt50001", "0", "2000")
+    print(kiwoom.get_comm_real_data("000660",10))
   
