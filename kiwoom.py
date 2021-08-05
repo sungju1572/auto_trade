@@ -24,6 +24,7 @@ class Kiwoom(QAxWidget):
         self.OnEventConnect.connect(self._event_connect) # 로그인 관련 이벤트 (.connect()는 이벤트와 슬롯을 연결하는 역할)
         self.OnReceiveTrData.connect(self._receive_tr_data) # 트랜잭션 요청 관련 이벤트
         self.OnReceiveChejanData.connect(self._receive_chejan_data) #체결잔고 요청 이벤트
+ #       self.OnReceiveRealData.connect(self._handler_real_data) #실시간 데이터 처리
 
     #로그인
     def comm_connect(self):
@@ -98,10 +99,22 @@ class Kiwoom(QAxWidget):
         self.dynamicCall("SendOrderFO(QString, QString, QString, QString, int, QString, QString, int, QString, QString)",
                          [rqname, screen_no, acc_no, code, order_type, slbytp, hoga, quantity, price, order_no])
 
-    #현재가 데이터
+
+####
+    #실시간 조회관련 핸들
+    def _handler_real_data(self, trcode, ret):
+        print(trcode, ret)
+        gubun =  self.GetCommRealData(code, 215)
+        remained_time =  self.GetCommRealData(code, 214)
+        print(gubun, remained_time)  
+
+
+
+    #현재가 데이터(실시간)
     def get_comm_real_data(self, trcode, fid):
         ret = self.dynamicCall("GetCommRealData(QString, int)", trcode, fid)
         return ret
+
 
     #체결정보
     def get_chejan_data(self, fid):
@@ -292,7 +305,7 @@ class Kiwoom(QAxWidget):
                                                   earning_rate])
         
     
-        
+ ###       
         
     def _opt50001(self, rqname, trcode):
         a = self.get_comm_real_data(trcode, "10")
@@ -324,7 +337,8 @@ if __name__ == "__main__":
   #                       [rqname, screen_no, acc_no, code, order_type, slbytp, hoga, quantity, price, order_no]
   
   
-    kiwoom.set_input_value("종목코드", "000660")
-    kiwoom.comm_rq_data("opt50001_req", "opt50001", "0", "2000")
-    print(kiwoom.get_comm_real_data("000660",10))
+    kiwoom.set_input_value("종목코드", "105R9000")
+    kiwoom.CommRqData("opt50001_req", "opt50001", 0, "2000")
+    print(kiwoom.get_comm_real_data("105R9000",10))
+    
   
