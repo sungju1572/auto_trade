@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 import time
 import pandas as pd
 import sqlite3
+from pytrader import *
 
 TR_REQ_TIME_INTERVAL = 0.2
 
@@ -14,6 +15,7 @@ class Kiwoom(QAxWidget):
         super().__init__()
         self._create_kiwoom_instance()
         self._set_signal_slots()
+
         
     #COM오브젝트 생성
     def _create_kiwoom_instance(self):
@@ -24,7 +26,7 @@ class Kiwoom(QAxWidget):
         self.OnEventConnect.connect(self._event_connect) # 로그인 관련 이벤트 (.connect()는 이벤트와 슬롯을 연결하는 역할)
         self.OnReceiveTrData.connect(self._receive_tr_data) # 트랜잭션 요청 관련 이벤트
         self.OnReceiveChejanData.connect(self._receive_chejan_data) #체결잔고 요청 이벤트
- #       self.OnReceiveRealData.connect(self._handler_real_data) #실시간 데이터 처리
+        self.OnReceiveRealData.connect(self._handler_real_data) #실시간 데이터 처리
 
     #로그인
     def comm_connect(self):
@@ -103,11 +105,8 @@ class Kiwoom(QAxWidget):
 ####
     #실시간 조회관련 핸들
     def _handler_real_data(self, trcode, ret):
-        print(trcode, ret)
-        gubun =  self.GetCommRealData(code, 215)
-        remained_time =  self.GetCommRealData(code, 214)
-        print(gubun, remained_time)  
-
+        price =  self.get_comm_real_data(trcode, 10)
+        print(price)
 
 
     #현재가 데이터(실시간)
