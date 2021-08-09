@@ -6,15 +6,24 @@ import time
 import pandas as pd
 import sqlite3
 from pytrader import *
+import datetime
+
+
 
 TR_REQ_TIME_INTERVAL = 0.2
 
 
 class Kiwoom(QAxWidget):
-    def __init__(self):
+    def __init__(self, ui):
         super().__init__()
         self._create_kiwoom_instance()
         self._set_signal_slots()
+        self.price = 0
+        self.time = ""
+        self.data = 0
+        self.ui = ui
+        self.account = self.ui.comboBox.currentText()
+        self.code = self.ui.lineEdit.text()
 
         
     #COM오브젝트 생성
@@ -105,8 +114,19 @@ class Kiwoom(QAxWidget):
 ####
     #실시간 조회관련 핸들
     def _handler_real_data(self, trcode, ret):
-        price =  self.get_comm_real_data(trcode, 10)
-        print(price)
+        global price
+        global time
+        self.time =  self.get_comm_real_data(trcode, 20)
+        date = datetime.datetime.now().strftime("%Y-%m-%d ")
+
+        if self.time != "":
+            self.time =  datetime.datetime.strptime(date + self.time, "%Y-%m-%d %H%M%S")
+        print(self.time, end=" ")
+
+            # 현재가 
+        self.price =  self.get_comm_real_data(trcode, 10)
+        print(self.price)
+        self.ui.present_price()
 
 
     #현재가 데이터(실시간)
@@ -307,8 +327,24 @@ class Kiwoom(QAxWidget):
  ###       
         
     def _opt50001(self, rqname, trcode):
-        a = self.get_comm_real_data(trcode, "10")
-        return a
+        print("connect")
+        
+        
+    #전략
+    def strategy(self, present_price):
+        global data, account, code
+        data = present_price
+        #매수
+        if data >= data*1.05:
+            self.send_order_fo("send_order_fo_req", "0101", account, code, 1, "2", "3", 1, 0, "")
+        
+        #매도
+        elif data <= data*0.95:
+            self.send_order_fo("send_order_fo_req", "0101", account, code, 1, "1", "3", 1, 0, "")
+        
+            
+            
+        
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -319,6 +355,8 @@ if __name__ == "__main__":
     kiwoom.reset_opw20006_output()
     account_number = kiwoom.get_login_info("ACCNO")
     account_number = account_number.split(';')[0]
+    
+    
 
 #    kiwoom.set_input_value("계좌번호", account_number)
 #    kiwoom.comm_rq_data("opw20006_req", "opw20006", 0, "2000")
@@ -336,8 +374,8 @@ if __name__ == "__main__":
   #                       [rqname, screen_no, acc_no, code, order_type, slbytp, hoga, quantity, price, order_no]
   
   
-    kiwoom.set_input_value("종목코드", "105R9000")
-    kiwoom.CommRqData("opt50001_req", "opt50001", 0, "2000")
-    print(kiwoom.get_comm_real_data("105R9000",10))
+#    kiwoom.set_input_value("종목코드", "105R9000")
+#    kiwoom.CommRqData("opt50001_req", "opt50001", 0, "2000")
+#    print(kiwoom.get_comm_real_data("105R9000",10))
     
   
