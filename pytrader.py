@@ -14,7 +14,7 @@ class MyWindow(QMainWindow, form_class):
 
         self.trade_stocks_done = False
 
-        self.kiwoom = Kiwoom() #객체생성
+        self.kiwoom = Kiwoom(self) #객체생성
         self.kiwoom.comm_connect() #연결
 
         self.timer = QTimer(self)
@@ -36,9 +36,10 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_5.clicked.connect(self.send_order_fo)
         self.pushButton_2.clicked.connect(self.check_balance)
         self.pushButton_4.clicked.connect(self.check_balance_2)
-        self.pushButton_6.clicked.connect(self.present_price)
+        self.pushButton_6.clicked.connect(self.set_real_data)
         self.load_buy_sell_list()
 
+        
     #자동주문
     def trade_stocks(self):
         hoga_lookup = {'지정가': "00", '시장가': "03"}
@@ -138,12 +139,12 @@ class MyWindow(QMainWindow, form_class):
         self.lineEdit_2.setText(name)
         
 ##
-    def present_price(self):
+    def set_real_data(self):
         code = self.lineEdit.text()
         self.kiwoom.set_input_value("종목코드", code)
         self.kiwoom.comm_rq_data("opt50001_req", "opt50001", 0, "1000")
-        price = self.kiwoom.get_comm_real_data
-        self.lineEdit_3.setText(str(price))
+
+
 
     #주문 (주식)
     def send_order(self):
@@ -200,6 +201,18 @@ class MyWindow(QMainWindow, form_class):
         if self.checkBox.isChecked():
             self.check_balance()
 
+##
+    def timeout3(self):
+        while self.checkBox_2.isChecked():
+            self.present_price()
+            
+            
+    #현재가격저장        
+    def present_price(self):
+        price = self.kiwoom.price
+        self.lineEdit_3.setText(str(price))
+     
+        
     def check_balance(self):
         self.kiwoom.reset_opw00018_output()
         account_number = self.comboBox.currentText()
