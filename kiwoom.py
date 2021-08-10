@@ -21,6 +21,7 @@ class Kiwoom(QAxWidget):
         self.price = 0
         self.time = ""
         self.data = 0
+        self.first_data = ""
         self.ui = ui
         self.account = self.ui.comboBox.currentText()
         self.code = self.ui.lineEdit.text()
@@ -114,7 +115,7 @@ class Kiwoom(QAxWidget):
 ####
     #실시간 조회관련 핸들
     def _handler_real_data(self, trcode, ret):
-        global price
+        global price, first_data
         global time
         self.time =  self.get_comm_real_data(trcode, 20)
         date = datetime.datetime.now().strftime("%Y-%m-%d ")
@@ -127,9 +128,14 @@ class Kiwoom(QAxWidget):
         self.price =  self.get_comm_real_data(trcode, 10)
         print(self.price)
         self.ui.present_price()
+        
+        
+        if self.first_data == "":
+            self.first_data = self.get_comm_real_data(trcode, 10)
+        print("초기가:" ,self.first_data)
 
 
-    #현재가 데이터(실시간)
+    #실시간 데이터 가져오기
     def get_comm_real_data(self, trcode, fid):
         ret = self.dynamicCall("GetCommRealData(QString, int)", trcode, fid)
         return ret
@@ -324,15 +330,21 @@ class Kiwoom(QAxWidget):
                                                   earning_rate])
         
     
- ###       
+ ###
+    def first_price(self):
+        global code
+        self.set_input_value("종목코드", code)
+        self.comm_rq_data("opt50003_req", "opt50003", 0, "1000")
+    
         
+##        
     def _opt50001(self, rqname, trcode):
         print("connect")
         
         
     #전략
     def strategy(self, present_price):
-        global data, account, code
+        global data, account, code, first_data
         data = present_price
         #매수
         if data >= data*1.05:
@@ -377,5 +389,8 @@ if __name__ == "__main__":
 #    kiwoom.set_input_value("종목코드", "105R9000")
 #    kiwoom.CommRqData("opt50001_req", "opt50001", 0, "2000")
 #    print(kiwoom.get_comm_real_data("105R9000",10))
-    
-  
+
+
+#    kiwoom.set_input_value("종목코드", "101R9000")
+#    kiwoom.comm_rq_data("opt50003_req", "opt50003", 0, "1000")
+#    print(kiwoom._comm_get_data(self, "101R9000", "", "opt50003_req", 0, "현재가")) 
