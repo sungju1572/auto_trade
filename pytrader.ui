@@ -390,12 +390,12 @@
       <rect>
        <x>40</x>
        <y>410</y>
-       <width>75</width>
+       <width>101</width>
        <height>23</height>
       </rect>
      </property>
      <property name="text">
-      <string>현재가</string>
+      <string>자동거래시작</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="lineEdit_3">
