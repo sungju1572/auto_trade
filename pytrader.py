@@ -39,6 +39,7 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_6.clicked.connect(self.set_real_data)
         self.load_buy_sell_list()
 
+
         
     #자동주문
     def trade_stocks(self):
@@ -137,6 +138,11 @@ class MyWindow(QMainWindow, form_class):
         code = self.lineEdit.text()
         name = self.kiwoom.get_master_code_name(code)
         self.lineEdit_2.setText(name)
+        
+    #계좌설정
+    def set_account(self):
+        account = self.comboBox.currentText()
+        return account
         
 ##
     def set_real_data(self):
