@@ -23,9 +23,10 @@ class Kiwoom(QAxWidget):
         self.data = 0
         self.first_data = ""
         self.ui = ui
-        self.account = self.ui.comboBox.currentText()
-        self.code = self.ui.lineEdit.text()
-
+        self.account = ""
+        self.code = ""
+        self.state = "초기상태"
+        
         
     #COM오브젝트 생성
     def _create_kiwoom_instance(self):
@@ -115,24 +116,38 @@ class Kiwoom(QAxWidget):
 ####
     #실시간 조회관련 핸들
     def _handler_real_data(self, trcode, ret):
-        global price, first_data
+        global price, first_data, account, code, state
         global time
+        
+        self.account = self.ui.comboBox.currentText()
+        self.code = self.ui.lineEdit.text()
+        
+        
         self.time =  self.get_comm_real_data(trcode, 20)
         date = datetime.datetime.now().strftime("%Y-%m-%d ")
 
         if self.time != "":
             self.time =  datetime.datetime.strptime(date + self.time, "%Y-%m-%d %H%M%S")
-        print(self.time, end=" ")
+        
 
             # 현재가 
         self.price =  self.get_comm_real_data(trcode, 10)
-        print(self.price)
-        self.ui.present_price()
-        
         
         if self.first_data == "":
-            self.first_data = self.get_comm_real_data(trcode, 10)
-        print("초기가:" ,self.first_data)
+            self.first_data = -float(self.get_comm_real_data(trcode, 10))
+        print("기준가격:" , self.first_data, end=" ")
+        print("상태: ", self.state)
+        print("")
+
+        if self.price !="":
+            self.price = -float(self.price)     
+            print(self.time, end=" ")
+            print(self.price)
+            print("")
+            self.strategy(self.price)
+            self.ui.present_price()
+        
+        
 
 
     #실시간 데이터 가져오기
@@ -331,6 +346,9 @@ class Kiwoom(QAxWidget):
         
     
  ###
+ 
+ 
+ 
     def first_price(self):
         global code
         self.set_input_value("종목코드", code)
@@ -344,18 +362,67 @@ class Kiwoom(QAxWidget):
         
     #전략
     def strategy(self, present_price):
-        global data, account, code, first_data
+        global data, account, code, first_data, state
         data = present_price
-        #매수
-        if data >= data*1.05:
-            self.send_order_fo("send_order_fo_req", "0101", account, code, 1, "2", "3", 1, 0, "")
+        ticker = 0.1
         
-        #매도
-        elif data <= data*0.95:
-            self.send_order_fo("send_order_fo_req", "0101", account, code, 1, "1", "3", 1, 0, "")
-        
-            
-            
+        #초기 상태
+        if self.state == "초기상태":
+            #매수
+            if data >= self.first_data + ticker:
+                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
+                print("매수", data )
+                print("상태 : 롱포지션 진입")
+                print("")
+                self.first_data = data
+                self.state = "롱포지션"
+            #매도
+            elif data <= self.first_data - ticker:
+                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
+                print("매도", data)
+                print("상태 : 숏포지션 진입")
+                print("")
+                self.first_data = data
+                self.state = "숏포지션"
+                
+        #매수 포지션      
+        elif self.state == "롱포지션":
+            #매도
+            if data <= self.first_data - 2*ticker:
+                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
+                print("매도", data)
+                print("상태 : 롱포지션 청산- /초기상태 진입")
+                print("")
+                self.first_data = data
+                self.state = "초기상태"
+            #윗단계에서 청산
+            elif data >= self.first_data + ticker:
+                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
+                print("매도", data)
+                print("상태 : 롱포지션 청산+ /초기상태 진입")
+                print("")
+                self.first_data = data
+                self.state = "초기상태"
+                
+        #매도 포지션      
+        elif self.state == "숏포지션":
+            if data >= self.first_data + 2*ticker:
+                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
+                print("매수", data )
+                print("상태 : 숏포지션 청산- /초기상태 진입")
+                print("")
+                self.first_data = data
+                self.state = "초기상태"
+            #윗단계에서 청산
+            elif data <= self.first_data - ticker:
+                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
+                print("매수", data)
+                print("상태 : 롱포지션 청산+ /초기상태 진입")
+                print("")
+                self.first_data = data
+                self.state = "초기상태"
+           
+
         
 
 if __name__ == "__main__":
@@ -363,11 +430,11 @@ if __name__ == "__main__":
     kiwoom = Kiwoom()
     kiwoom.comm_connect() #연결
 
-    kiwoom.reset_opw00018_output()
-    kiwoom.reset_opw20006_output()
-    account_number = kiwoom.get_login_info("ACCNO")
-    account_number = account_number.split(';')[0]
-    
+ #   kiwoom.reset_opw00018_output()
+ #   kiwoom.reset_opw20006_output()
+ #   account_number = kiwoom.get_login_info("ACCNO")
+ #   account_number = account_number.split(';')[0]
+    print(kiwoom.account)
     
 
 #    kiwoom.set_input_value("계좌번호", account_number)
