@@ -395,14 +395,11 @@ class Kiwoom(QAxWidget):
                 print("")
                 self.first_data = data
                 self.state = "초기상태"
-            #윗단계에서 청산
+            #윗단계로 기준 바꾸고 홀딩
             elif data >= self.first_data + ticker:
-                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
-                print("매도", data)
-                print("상태 : 롱포지션 청산+ /초기상태 진입")
-                print("")
                 self.first_data = data
-                self.state = "초기상태"
+                print("한단계위 진입", data)
+                print("")
                 
         #매도 포지션      
         elif self.state == "숏포지션":
@@ -413,14 +410,11 @@ class Kiwoom(QAxWidget):
                 print("")
                 self.first_data = data
                 self.state = "초기상태"
-            #윗단계에서 청산
+            #아랫단계로 기준 바꾸고 홀딩
             elif data <= self.first_data - ticker:
-                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
-                print("매수", data)
-                print("상태 : 롱포지션 청산+ /초기상태 진입")
-                print("")
                 self.first_data = data
-                self.state = "초기상태"
+                print("한단계 아랫단계 진입", date)
+                print("")
            
 
         
