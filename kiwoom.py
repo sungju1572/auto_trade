@@ -388,7 +388,7 @@ class Kiwoom(QAxWidget):
         #매수 포지션      
         elif self.state == "롱포지션":
             #매도
-            if data <= self.first_data - 2*ticker:
+            if data <= self.first_data -2*ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                 print("매도", data)
                 print("상태 : 롱포지션 청산- /초기상태 진입")
@@ -413,7 +413,7 @@ class Kiwoom(QAxWidget):
             #아랫단계로 기준 바꾸고 홀딩
             elif data <= self.first_data - ticker:
                 self.first_data = data
-                print("한단계 아랫단계 진입", date)
+                print("한단계 아랫단계 진입", data)
                 print("")
            
 
