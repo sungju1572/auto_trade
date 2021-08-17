@@ -4,6 +4,9 @@ from PyQt5.QtCore import *
 from PyQt5 import uic
 from Kiwoom import *
 import time
+from PyQt5.QtChart import QLineSeries, QChart
+
+
 
 form_class = uic.loadUiType("pytrader.ui")[0]
 
