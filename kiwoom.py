@@ -26,6 +26,8 @@ class Kiwoom(QAxWidget):
         self.account = ""
         self.code = ""
         self.state = "초기상태"
+        self.sell_time = ""
+        self.hour = "" 
         
         
     #COM오브젝트 생성
@@ -116,7 +118,7 @@ class Kiwoom(QAxWidget):
 ####
     #실시간 조회관련 핸들
     def _handler_real_data(self, trcode, ret):
-        global price, first_data, account, code, state
+        global price, first_data, account, code, state, sell_time, hour
         global time
         
         self.account = self.ui.comboBox.currentText()
@@ -125,29 +127,56 @@ class Kiwoom(QAxWidget):
         
         self.time =  self.get_comm_real_data(trcode, 20)
         date = datetime.datetime.now().strftime("%Y-%m-%d ")
+        
+        self.hour = datetime.datetime.now().strftime("%H")
+        
+        self.sell_time = int(self.ui.comboBox_7.currentText())
+
+        print(int(self.hour)< self.sell_time)
+        
 
         if self.time != "":
             self.time =  datetime.datetime.strptime(date + self.time, "%Y-%m-%d %H%M%S")
-        
 
-            # 현재가 
-        self.price =  self.get_comm_real_data(trcode, 10)
-        
+
         if self.first_data == "":
             self.first_data = -float(self.get_comm_real_data(trcode, 10))
-        print("기준가격:" , self.first_data, end=" ")
-        print("상태: ", self.state)
-        print("")
-
-        if self.price !="":
-            self.price = -float(self.price)     
-            print(self.time, end=" ")
-            print(self.price)
+            print("기준가격:" , self.first_data, end=" ")
+            print("상태: ", self.state)
             print("")
-            self.strategy(self.price)
-            self.ui.present_price()
+
+            
+        if self.sell_time == 0 or int(self.hour)< self.sell_time: 
+
+            # 현재가 
+            self.price =  self.get_comm_real_data(trcode, 10)
+            
+            print("기준가격:" , self.first_data, end=" ")
+            print("상태: ", self.state)
+            print("")
+            
+            if self.price !="":
+                self.price = -float(self.price)     
+                print(self.time, end=" ")
+                print(self.price)
+                print("")
+                self.strategy(self.price)
+                self.ui.present_price()
         
-        
+
+        else:
+            if self.state == "숏포지션":
+                #청산(매수)
+                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
+                print("청산_매수")
+            
+            elif self.state == "롱포지션":
+                #청산(매도)
+                self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
+                print("청산_매도")
+            
+
+
 
 
     #실시간 데이터 가져오기
@@ -364,7 +393,7 @@ class Kiwoom(QAxWidget):
     def strategy(self, present_price):
         global data, account, code, first_data, state
         data = present_price
-        ticker = 0.1
+        ticker = 0.5
         
         #초기 상태
         if self.state == "초기상태":
@@ -388,7 +417,7 @@ class Kiwoom(QAxWidget):
         #매수 포지션      
         elif self.state == "롱포지션":
             #매도
-            if data <= self.first_data -2*ticker:
+            if data <= self.first_data - 0.5*ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                 print("매도", data)
                 print("상태 : 롱포지션 청산- /초기상태 진입")
@@ -403,7 +432,7 @@ class Kiwoom(QAxWidget):
                 
         #매도 포지션      
         elif self.state == "숏포지션":
-            if data >= self.first_data + 2*ticker:
+            if data >= self.first_data + 0.5*ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
                 print("매수", data )
                 print("상태 : 숏포지션 청산- /초기상태 진입")
@@ -413,11 +442,13 @@ class Kiwoom(QAxWidget):
             #아랫단계로 기준 바꾸고 홀딩
             elif data <= self.first_data - ticker:
                 self.first_data = data
-                print("한단계 아랫단계 진입", data)
+                print("한단계 아랫단계 진입", date)
                 print("")
            
 
         
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
