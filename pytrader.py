@@ -4,9 +4,6 @@ from PyQt5.QtCore import *
 from PyQt5 import uic
 from Kiwoom import *
 import time
-from PyQt5.QtChart import QLineSeries, QChart
-
-
 
 form_class = uic.loadUiType("pytrader.ui")[0]
 
@@ -43,7 +40,7 @@ class MyWindow(QMainWindow, form_class):
         self.load_buy_sell_list()
 
 
-        
+    """        
     #자동주문
     def trade_stocks(self):
         hoga_lookup = {'지정가': "00", '시장가': "03"}
@@ -136,6 +133,9 @@ class MyWindow(QMainWindow, form_class):
                 self.tableWidget_4.setItem(len(buy_list) + j, i, item)
 
         self.tableWidget_4.resizeRowsToContents()
+
+        """
+
 
     def code_changed(self):
         code = self.lineEdit.text()
