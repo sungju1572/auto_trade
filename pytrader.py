@@ -40,7 +40,7 @@ class MyWindow(QMainWindow, form_class):
         self.load_buy_sell_list()
 
 
-    """        
+            
     #자동주문
     def trade_stocks(self):
         hoga_lookup = {'지정가': "00", '시장가': "03"}
@@ -134,7 +134,7 @@ class MyWindow(QMainWindow, form_class):
 
         self.tableWidget_4.resizeRowsToContents()
 
-        """
+        
 
 
     def code_changed(self):
