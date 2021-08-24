@@ -146,7 +146,7 @@ class Kiwoom(QAxWidget):
             print("")
 
             
-        if self.sell_time == 0 or int(self.hour)< self.sell_time: 
+        if self.sell_time == 0 or int(self.hour) < self.sell_time: 
 
             # 현재가 
             self.price =  self.get_comm_real_data(trcode, 10)
