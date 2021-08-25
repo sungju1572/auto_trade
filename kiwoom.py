@@ -132,7 +132,7 @@ class Kiwoom(QAxWidget):
         
         self.sell_time = int(self.ui.comboBox_7.currentText())
 
-        print(int(self.hour)< self.sell_time)
+        
         
 
         if self.time != "":
@@ -140,7 +140,8 @@ class Kiwoom(QAxWidget):
 
 
         if self.first_data == "":
-            self.first_data = -float(self.get_comm_real_data(trcode, 10))
+            self.first_data = self.get_comm_real_data(trcode, 10)
+            self.first_data = float(self.first_data[1:])
             print("기준가격:" , self.first_data, end=" ")
             print("상태: ", self.state)
             print("")
@@ -150,13 +151,16 @@ class Kiwoom(QAxWidget):
 
             # 현재가 
             self.price =  self.get_comm_real_data(trcode, 10)
+            self.price = self.price[1:]
+            
             
             print("기준가격:" , self.first_data, end=" ")
+            print("현재가:", self.price)
             print("상태: ", self.state)
             print("")
             
             if self.price !="":
-                self.price = -float(self.price)     
+                self.price = float(self.price)
                 print(self.time, end=" ")
                 print(self.price)
                 print("")
@@ -393,13 +397,16 @@ class Kiwoom(QAxWidget):
     def strategy(self, present_price):
         global data, account, code, first_data, state
         data = present_price
-        ticker = 0.5
+        ticker = 0.4
         
         #초기 상태
         if self.state == "초기상태":
             #매수
             if data >= self.first_data + ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
+                
+                print(type(data), type(self.first_data + ticker))
+                
                 print("매수", data )
                 print("상태 : 롱포지션 진입")
                 print("")
@@ -408,6 +415,9 @@ class Kiwoom(QAxWidget):
             #매도
             elif data <= self.first_data - ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
+                
+                print(type(data), type(self.first_data + ticker))
+                
                 print("매도", data)
                 print("상태 : 숏포지션 진입")
                 print("")
