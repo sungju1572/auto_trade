@@ -397,7 +397,7 @@ class Kiwoom(QAxWidget):
     def strategy(self, present_price):
         global data, account, code, first_data, state
         data = present_price
-        ticker = 0.4
+        ticker = 0.5
         
         #초기 상태
         if self.state == "초기상태":
@@ -427,7 +427,7 @@ class Kiwoom(QAxWidget):
         #매수 포지션      
         elif self.state == "롱포지션":
             #매도
-            if data <= self.first_data - 0.5*ticker:
+            if data <= self.first_data - 0.6*ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                 print("매도", data)
                 print("상태 : 롱포지션 청산- /초기상태 진입")
@@ -442,7 +442,7 @@ class Kiwoom(QAxWidget):
                 
         #매도 포지션      
         elif self.state == "숏포지션":
-            if data >= self.first_data + 0.5*ticker:
+            if data >= self.first_data + 0.6*ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
                 print("매수", data )
                 print("상태 : 숏포지션 청산- /초기상태 진입")
