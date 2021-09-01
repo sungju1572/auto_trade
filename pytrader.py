@@ -37,10 +37,10 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_2.clicked.connect(self.check_balance)
         self.pushButton_4.clicked.connect(self.check_balance_2)
         self.pushButton_6.clicked.connect(self.set_real_data)
-        self.load_buy_sell_list()
+       # self.load_buy_sell_list()
 
 
-            
+    """    
     #자동주문
     def trade_stocks(self):
         hoga_lookup = {'지정가': "00", '시장가': "03"}
@@ -134,7 +134,7 @@ class MyWindow(QMainWindow, form_class):
 
         self.tableWidget_4.resizeRowsToContents()
 
-        
+    """
 
 
     def code_changed(self):
@@ -192,7 +192,7 @@ class MyWindow(QMainWindow, form_class):
         current_time = QTime.currentTime()
 
         if current_time > market_start_time and self.trade_stocks_done is False:
-            self.trade_stocks()
+            #self.trade_stocks()
             self.trade_stocks_done = True
 
         text_time = current_time.toString("hh:mm:ss")
@@ -206,11 +206,12 @@ class MyWindow(QMainWindow, form_class):
 
         self.statusbar.showMessage(state_msg + " | " + time_msg)
 
+    #잔고 실시간으로 갱신
     def timeout2(self):
         if self.checkBox.isChecked():
             self.check_balance()
 
-##
+    #현재가 실시간 갱신
     def timeout3(self):
         while self.checkBox_2.isChecked():
             self.present_price()
@@ -221,7 +222,7 @@ class MyWindow(QMainWindow, form_class):
         price = self.kiwoom.price
         self.lineEdit_3.setText(str(price))
      
-        
+    #주식 잔고 
     def check_balance(self):
         self.kiwoom.reset_opw00018_output()
         account_number = self.comboBox.currentText()
@@ -262,7 +263,8 @@ class MyWindow(QMainWindow, form_class):
                 self.tableWidget_2.setItem(j, i, item)
 
         self.tableWidget_2.resizeRowsToContents()
-        
+    
+    #선물 잔고
     def check_balance_2(self):
         self.kiwoom.reset_opw20006_output()
         account_number = self.comboBox.currentText()
