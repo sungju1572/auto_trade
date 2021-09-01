@@ -28,6 +28,9 @@ class Kiwoom(QAxWidget):
         self.state = "초기상태"
         self.sell_time = ""
         self.hour = "" 
+        self.trade_count = 0
+        self.ticker = ""
+        self.liquidation = ""
         
         
     #COM오브젝트 생성
@@ -118,26 +121,32 @@ class Kiwoom(QAxWidget):
 ####
     #실시간 조회관련 핸들
     def _handler_real_data(self, trcode, ret):
-        global price, first_data, account, code, state, sell_time, hour
+        global price, first_data, account, code, state, sell_time, hour, ticker, liquidation
         global time
         
+        #ui에서 계좌랑 종목코드 가져오기
         self.account = self.ui.comboBox.currentText()
         self.code = self.ui.lineEdit.text()
         
+        #티커값
+        self.ticker = float(self.ui.lineEdit_4.text())
         
+        #강제청산값
+        self.liquidation = float(self.ui.lineEdit_5.text())
+        
+        #체결시간
         self.time =  self.get_comm_real_data(trcode, 20)
-        date = datetime.datetime.now().strftime("%Y-%m-%d ")
         
+        #현재시간
+        date = datetime.datetime.now().strftime("%Y-%m-%d ")        
         self.hour = datetime.datetime.now().strftime("%H")
         
-        self.sell_time = int(self.ui.comboBox_7.currentText())
-
+        #강제청산할 시간 ui에서 가져오기
+        self.sell_time = int(self.ui.comboBox_7.currentText())        
         
         
-
         if self.time != "":
             self.time =  datetime.datetime.strptime(date + self.time, "%Y-%m-%d %H%M%S")
-
 
         if self.first_data == "":
             self.first_data = self.get_comm_real_data(trcode, 10)
@@ -145,7 +154,6 @@ class Kiwoom(QAxWidget):
             print("기준가격:" , self.first_data, end=" ")
             print("상태: ", self.state)
             print("")
-
             
         if self.sell_time == 0 or int(self.hour) < self.sell_time: 
 
@@ -153,10 +161,12 @@ class Kiwoom(QAxWidget):
             self.price =  self.get_comm_real_data(trcode, 10)
             self.price = self.price[1:]
             
-            
             print("기준가격:" , self.first_data, end=" ")
             print("현재가:", self.price)
             print("상태: ", self.state)
+            print("거래량: ", self.trade_count)
+            print("티커: ", self.ticker, end=" ")
+            print("기준값 변경범위: ")
             print("")
             
             if self.price !="":
@@ -395,14 +405,14 @@ class Kiwoom(QAxWidget):
         
     #전략
     def strategy(self, present_price):
-        global data, account, code, first_data, state
+        global data, account, code, first_data, state, trade_count, ticker, liquidation
         data = present_price
-        ticker = 0.5
         
+             
         #초기 상태
         if self.state == "초기상태":
             #매수
-            if data >= self.first_data + ticker:
+            if data >= self.first_data + self.ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
                 
                 print(type(data), type(self.first_data + ticker))
@@ -413,7 +423,7 @@ class Kiwoom(QAxWidget):
                 self.first_data = data
                 self.state = "롱포지션"
             #매도
-            elif data <= self.first_data - ticker:
+            elif data <= self.first_data - self.ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                 
                 print(type(data), type(self.first_data + ticker))
@@ -427,30 +437,32 @@ class Kiwoom(QAxWidget):
         #매수 포지션      
         elif self.state == "롱포지션":
             #매도
-            if data <= self.first_data - 0.6*ticker:
+            if data <= self.first_data - self.liquidation:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                 print("매도", data)
                 print("상태 : 롱포지션 청산- /초기상태 진입")
                 print("")
                 self.first_data = data
+                self.trade_count += 1
                 self.state = "초기상태"
             #윗단계로 기준 바꾸고 홀딩
-            elif data >= self.first_data + ticker:
+            elif data >= self.first_data + self.ticker:
                 self.first_data = data
                 print("한단계위 진입", data)
                 print("")
                 
         #매도 포지션      
         elif self.state == "숏포지션":
-            if data >= self.first_data + 0.6*ticker:
+            if data >= self.first_data + self.liquidation:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
                 print("매수", data )
                 print("상태 : 숏포지션 청산- /초기상태 진입")
                 print("")
                 self.first_data = data
+                self.trade_count += 1
                 self.state = "초기상태"
             #아랫단계로 기준 바꾸고 홀딩
-            elif data <= self.first_data - ticker:
+            elif data <= self.first_data - self.ticker:
                 self.first_data = data
                 print("한단계 아랫단계 진입", date)
                 print("")
