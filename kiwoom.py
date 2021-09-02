@@ -121,18 +121,13 @@ class Kiwoom(QAxWidget):
 ####
     #실시간 조회관련 핸들
     def _handler_real_data(self, trcode, ret):
-        global price, first_data, account, code, state, sell_time, hour, ticker, liquidation
-        global time
+        #global price, first_data, account, code, state, sell_time, hour
+        #global time
         
         #ui에서 계좌랑 종목코드 가져오기
         self.account = self.ui.comboBox.currentText()
         self.code = self.ui.lineEdit.text()
         
-        #티커값
-        self.ticker = float(self.ui.lineEdit_4.text())
-        
-        #강제청산값
-        self.liquidation = float(self.ui.lineEdit_5.text())
         
         #체결시간
         self.time =  self.get_comm_real_data(trcode, 20)
@@ -161,18 +156,17 @@ class Kiwoom(QAxWidget):
             self.price =  self.get_comm_real_data(trcode, 10)
             self.price = self.price[1:]
             
-            print("기준가격:" , self.first_data, end=" ")
-            print("현재가:", self.price)
-            print("상태: ", self.state)
-            print("거래량: ", self.trade_count)
-            print("티커: ", self.ticker, end=" ")
-            print("기준값 변경범위: ")
+            print("-----------------------------")
+            print("|기준가격: " , self.first_data)
+            print("|상태: ", self.state)
+            print("|거래량: ", self.trade_count)
+            print("-----------------------------")
             print("")
             
             if self.price !="":
                 self.price = float(self.price)
-                print(self.time, end=" ")
-                print(self.price)
+                print(self.time)
+                print("현재가: ", self.price)
                 print("")
                 self.strategy(self.price)
                 self.ui.present_price()
@@ -393,8 +387,8 @@ class Kiwoom(QAxWidget):
  
  
     def first_price(self):
-        global code
-        self.set_input_value("종목코드", code)
+        #global code
+        self.set_input_value("종목코드", self.code)
         self.comm_rq_data("opt50003_req", "opt50003", 0, "1000")
     
         
@@ -405,17 +399,21 @@ class Kiwoom(QAxWidget):
         
     #전략
     def strategy(self, present_price):
-        global data, account, code, first_data, state, trade_count, ticker, liquidation
+        #global data, account, code, first_data, state, trade_count
         data = present_price
+        #ticker = 0.5
         
-             
+        self.ticker = float(self.ui.lineEdit_4.text())
+        self.liquidation = float(self.ui.lineEdit_5.text())
+                
+        
         #초기 상태
         if self.state == "초기상태":
             #매수
             if data >= self.first_data + self.ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
                 
-                print(type(data), type(self.first_data + ticker))
+                print(type(data), type(self.first_data + self.ticker))
                 
                 print("매수", data )
                 print("상태 : 롱포지션 진입")
@@ -426,7 +424,7 @@ class Kiwoom(QAxWidget):
             elif data <= self.first_data - self.ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                 
-                print(type(data), type(self.first_data + ticker))
+                print(type(data), type(self.first_data + self.ticker))
                 
                 print("매도", data)
                 print("상태 : 숏포지션 진입")
@@ -476,6 +474,11 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     kiwoom = Kiwoom()
     kiwoom.comm_connect() #연결
+    
+
+    
+    
+    
 
  #   kiwoom.reset_opw00018_output()
  #   kiwoom.reset_opw20006_output()
