@@ -160,6 +160,7 @@ class Kiwoom(QAxWidget):
             print("|기준가격: " , self.first_data)
             print("|상태: ", self.state)
             print("|거래량: ", self.trade_count)
+            print(self.trade_dic)
             print("-----------------------------")
             print("")
             
@@ -177,11 +178,13 @@ class Kiwoom(QAxWidget):
                 #청산(매수)
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
                 print("청산_매수")
+                self.state == "초기상태"
             
             elif self.state == "롱포지션":
                 #청산(매도)
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                 print("청산_매도")
+                self.state == "초기상태"
             
 
 
