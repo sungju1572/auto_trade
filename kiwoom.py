@@ -27,10 +27,11 @@ class Kiwoom(QAxWidget):
         self.code = ""
         self.state = "초기상태"
         self.sell_time = ""
-        self.hour = "" 
+        self.present_time = "" 
         self.trade_count = 0
         self.ticker = ""
         self.liquidation = ""
+        self.now = ""
         self.trade_dic = {}
         
     #COM오브젝트 생성
@@ -133,8 +134,11 @@ class Kiwoom(QAxWidget):
         self.time =  self.get_comm_real_data(trcode, 20)
         
         #현재시간
-        date = datetime.datetime.now().strftime("%Y-%m-%d ")        
-        self.hour = datetime.datetime.now().strftime("%H")
+        now = datetime.datetime.now()
+        date = now.strftime("%Y-%m-%d ")        
+        hour = now.strftime("%H")
+        self.present_time = now.strftime("%H : %M")
+        
         
         #강제청산할 시간 ui에서 가져오기
         self.sell_time = int(self.ui.comboBox_7.currentText())        
@@ -150,7 +154,7 @@ class Kiwoom(QAxWidget):
             print("상태: ", self.state)
             print("")
             
-        if self.sell_time == 0 or int(self.hour) < self.sell_time: 
+        if self.sell_time == 0 or int(hour) < self.sell_time: 
 
             # 현재가 
             self.price =  self.get_comm_real_data(trcode, 10)
@@ -178,13 +182,13 @@ class Kiwoom(QAxWidget):
                 #청산(매수)
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
                 print("청산_매수")
-                self.state == "초기상태"
+                self.state = "초기상태"
             
             elif self.state == "롱포지션":
                 #청산(매도)
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                 print("청산_매도")
-                self.state == "초기상태"
+                self.state = "초기상태"
             
 
 
@@ -423,7 +427,7 @@ class Kiwoom(QAxWidget):
                 print("")
                 self.first_data = data
                 self.state = "롱포지션"
-                self.trade_dic["롱"] = self.time  
+                self.trade_dic["롱 진입"] = self.present_time  
             #매도
             elif data <= self.first_data - self.ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
@@ -435,7 +439,7 @@ class Kiwoom(QAxWidget):
                 print("")
                 self.first_data = data
                 self.state = "숏포지션"
-                self.trade_dic["숏"] = self.time  
+                self.trade_dic["숏 진입"] = self.present_time  
                 
         #매수 포지션      
         elif self.state == "롱포지션":
@@ -448,7 +452,7 @@ class Kiwoom(QAxWidget):
                 self.first_data = data
                 self.trade_count += 1
                 self.state = "초기상태"
-                self.trade_dic["롱청산"] = self.time  
+                self.trade_dic["롱청산"] = self.present_time  
             #윗단계로 기준 바꾸고 홀딩
             elif data >= self.first_data + self.ticker:
                 self.first_data = data
@@ -465,7 +469,7 @@ class Kiwoom(QAxWidget):
                 self.first_data = data
                 self.trade_count += 1
                 self.state = "초기상태"
-                self.trade_dic["숏청산"] = self.time  
+                self.trade_dic["숏청산"] = self.present_time  
             #아랫단계로 기준 바꾸고 홀딩
             elif data <= self.first_data - self.ticker:
                 self.first_data = data
