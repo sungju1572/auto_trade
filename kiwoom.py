@@ -31,7 +31,6 @@ class Kiwoom(QAxWidget):
         self.trade_count = 0
         self.ticker = ""
         self.liquidation = ""
-        self.now = ""
         self.trade_dic = {}
         
     #COM오브젝트 생성
@@ -96,13 +95,7 @@ class Kiwoom(QAxWidget):
         ret = self.dynamicCall("CommGetData(QString, QString, QString, int, QString)", code, #더이상 지원 안함??
                                real_type, field_name, index, item_name)
         return ret.strip()
-    """  
-    #ㅅ조회정보요청??
-    def _get_comm_data(self, trcode, rqname, index, item_name):
-        ret = self.dynamicCall("GetCommData(QString, QString, int, QString)", trcode, 
-                                rqname, index, item_name)
-        return ret.strip()
-    """
+
     #수신받은 데이터 반복횟수
     def _get_repeat_cnt(self, trcode, rqname):
         ret = self.dynamicCall("GetRepeatCnt(QString, QString)", trcode, rqname)
@@ -122,8 +115,6 @@ class Kiwoom(QAxWidget):
 ####
     #실시간 조회관련 핸들
     def _handler_real_data(self, trcode, ret):
-        #global price, first_data, account, code, state, sell_time, hour
-        #global time
         
         #ui에서 계좌랑 종목코드 가져오기
         self.account = self.ui.comboBox.currentText()
@@ -190,9 +181,6 @@ class Kiwoom(QAxWidget):
                 print("청산_매도")
                 self.state = "초기상태"
             
-
-
-
 
     #실시간 데이터 가져오기
     def get_comm_real_data(self, trcode, fid):
@@ -394,7 +382,6 @@ class Kiwoom(QAxWidget):
  
  
     def first_price(self):
-        #global code
         self.set_input_value("종목코드", self.code)
         self.comm_rq_data("opt50003_req", "opt50003", 0, "1000")
     
@@ -406,10 +393,9 @@ class Kiwoom(QAxWidget):
         
     #전략
     def strategy(self, present_price):
-        #global data, account, code, first_data, state, trade_count
+       
         data = present_price
-        #ticker = 0.5
-        
+
         self.ticker = float(self.ui.lineEdit_4.text())
         self.liquidation = float(self.ui.lineEdit_5.text())
                 
@@ -427,7 +413,7 @@ class Kiwoom(QAxWidget):
                 print("")
                 self.first_data = data
                 self.state = "롱포지션"
-                self.trade_dic["롱 진입"] = self.present_time  
+                self.trade_dic[self.present_time] = "롱진입"
             #매도
             elif data <= self.first_data - self.ticker:
                 self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
@@ -439,7 +425,7 @@ class Kiwoom(QAxWidget):
                 print("")
                 self.first_data = data
                 self.state = "숏포지션"
-                self.trade_dic["숏 진입"] = self.present_time  
+                self.trade_dic[self.present_time] = "숏진입"
                 
         #매수 포지션      
         elif self.state == "롱포지션":
@@ -452,7 +438,7 @@ class Kiwoom(QAxWidget):
                 self.first_data = data
                 self.trade_count += 1
                 self.state = "초기상태"
-                self.trade_dic["롱청산"] = self.present_time  
+                self.trade_dic[self.present_time] = "롱청산"
             #윗단계로 기준 바꾸고 홀딩
             elif data >= self.first_data + self.ticker:
                 self.first_data = data
@@ -469,7 +455,7 @@ class Kiwoom(QAxWidget):
                 self.first_data = data
                 self.trade_count += 1
                 self.state = "초기상태"
-                self.trade_dic["숏청산"] = self.present_time  
+                self.trade_dic[self.present_time] = "숏청산"  
             #아랫단계로 기준 바꾸고 홀딩
             elif data <= self.first_data - self.ticker:
                 self.first_data = data
@@ -495,8 +481,7 @@ if __name__ == "__main__":
  #   kiwoom.reset_opw20006_output()
  #   account_number = kiwoom.get_login_info("ACCNO")
  #   account_number = account_number.split(';')[0]
-    print(kiwoom.account)
-    
+
 
 #    kiwoom.set_input_value("계좌번호", account_number)
 #    kiwoom.comm_rq_data("opw20006_req", "opw20006", 0, "2000")
