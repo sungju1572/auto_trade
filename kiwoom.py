@@ -187,7 +187,6 @@ class Kiwoom(QAxWidget):
         ret = self.dynamicCall("GetCommRealData(QString, int)", trcode, fid)
         return ret
 
-
     #체결정보
     def get_chejan_data(self, fid):
         ret = self.dynamicCall("GetChejanData(int)", fid)
