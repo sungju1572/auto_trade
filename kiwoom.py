@@ -191,6 +191,7 @@ class Kiwoom(QAxWidget):
     def get_chejan_data(self, fid):
         ret = self.dynamicCall("GetChejanData(int)", fid)
         return ret
+    
 
     def get_server_gubun(self):
         ret = self.dynamicCall("KOA_Functions(QString, QString)", "GetServerGubun", "")
