@@ -593,8 +593,8 @@
      <rect>
       <x>20</x>
       <y>510</y>
-      <width>361</width>
-      <height>261</height>
+      <width>511</width>
+      <height>301</height>
      </rect>
     </property>
     <property name="title">
@@ -610,7 +610,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>자동거래시작</string>
+      <string>프로그램시작</string>
      </property>
     </widget>
     <widget class="QCheckBox" name="checkBox_2">
@@ -775,6 +775,19 @@
      </property>
      <property name="text">
       <string/>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_7">
+     <property name="geometry">
+      <rect>
+       <x>340</x>
+       <y>40</y>
+       <width>101</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>거래시작</string>
      </property>
     </widget>
    </widget>
