@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5 import uic
-from Kiwoom import *
+from Kiwoom_2 import *
 import time
 
 form_class = uic.loadUiType("pytrader.ui")[0]
@@ -11,7 +11,10 @@ class MyWindow(QMainWindow, form_class):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-
+        
+        
+        self.trade_set = False
+        
         self.trade_stocks_done = False
 
         self.kiwoom = Kiwoom(self) #객체생성
@@ -37,6 +40,9 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_2.clicked.connect(self.check_balance)
         self.pushButton_4.clicked.connect(self.check_balance_2)
         self.pushButton_6.clicked.connect(self.set_real_data)
+        self.pushButton_7.clicked.connect(self.trade_start)
+        
+        
 
     def code_changed(self):
         code = self.lineEdit.text()
@@ -206,6 +212,13 @@ class MyWindow(QMainWindow, form_class):
                 self.tableWidget_2.setItem(j, i, item)
 
         self.tableWidget_2.resizeRowsToContents()
+        
+        
+    def trade_start(self):
+        self.trade_set = True
+        code = self.lineEdit.text()
+        self.kiwoom.set_input_value("종목코드", code)
+        self.kiwoom.comm_rq_data("opt50003_req", "opt50003", 0, "1000")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
