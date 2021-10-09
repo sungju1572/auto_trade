@@ -34,8 +34,10 @@ class Kiwoom(QAxWidget):
         self.trade_dic = {}
         self.first_price = 0
         self.first_price_list = []
+        self.first_price_range = []
         self.trade_start = False
         self.trade_set = True
+        self.constant_present_price = ""
         
         
     #COM오브젝트 생성
@@ -158,6 +160,8 @@ class Kiwoom(QAxWidget):
         #print(self.trade_start)
         #print(self.trade_set)
             
+        
+        
         standard_time = float(self.ui.lineEdit_6.text())
 
 
@@ -173,10 +177,10 @@ class Kiwoom(QAxWidget):
         #버튼 눌렀을때 거래시작
         if self.trade_start == True and self.trade_set == True and  hour < self.sell_time:
             
-            #시가 리스트 생성
-            self.first_price_list = list(np.arange(float(self.start_price) -100, float(self.start_price) + 100, self.ticker))
+            print(self.previous, self.next)
             
-            
+            self.first_price_range = self.first_price_list
+
             # 현재가 
             self.price =  self.get_comm_real_data(trcode, 10)
             self.price = self.price[1:]
@@ -184,17 +188,19 @@ class Kiwoom(QAxWidget):
             
             if self.price !="":
                 self.price = float(self.price)
-                print(self.time)
-                print("현재가: ", self.price)
-                print("초기거래 (시가기준 ):", self.trade_start )
-                print("시가 : ", self.first_price)
                 
+                self.first_price_range.append(self.price)
+                self.first_price_range = sorted(self.first_price_range)
+                self.first_price_range = list(np.round(self.first_price_range, 2))
+                
+                print(self.time)
+                print("|현재가: ", self.price)
+                print("|초기거래 (시가기준 ):", self.trade_start )
+                print("|시가 : ", self.start_price)
+                print("|기준값 :", self.first_price_list[self.first_price_list.index(self.price)-1], "~", self.first_price_list[self.first_price_list.index(self.price)+1])
                 print("")
                 
-                
-                self.first_price_list.append(self.price)
-                self.first_price_list = sorted(self.first_price_list)
-                
+
                 self.strategy_2(self.first_price_list, self.price)
                 
                 self.ui.present_price()
@@ -351,6 +357,21 @@ class Kiwoom(QAxWidget):
             
     def _opt50003(self, rqname, trcode):
         self.start_price = self._comm_get_data(trcode, "", rqname, 0, "시가")
+        self.first_price_list = list(np.arange(float(self.start_price) -100, float(self.start_price) + 100, self.ticker))
+        
+        
+        """
+        while self.constant_present_price == "":
+            self.constant_present_price = self.get_comm_real_data(trcode, 10)
+            if self.constant_present_price !="":
+                break
+        self.first_price_list.append(self.constant_present_price)
+        self.first_price_list = sorted(self.first_price_list)
+        idx = self.first_price_list.index(self.constant_present_price)
+        self.previous = self.first_price_list[idx-1]
+        self.next = self.first_price_list[idx+1]
+        """
+        
 
     #opw박스 초기화 (주식)
     def reset_opw00018_output(self):
@@ -452,7 +473,7 @@ class Kiwoom(QAxWidget):
     def first_price(self):
         self.set_input_value("종목코드", self.code)
         self.comm_rq_data("opt50003_req", "opt50003", 0, "1000")
-    
+        
         
 ##        
     def _opt50001(self, rqname, trcode):
@@ -529,9 +550,10 @@ class Kiwoom(QAxWidget):
                 
                 
     def strategy_2(self, first_price_list, present_price):
+        
         idx = first_price_list.index(present_price)
         data = present_price
-                
+       # print(first_price_list)        
         
         #초기 상태
         #매수
@@ -546,7 +568,7 @@ class Kiwoom(QAxWidget):
             self.trade_dic[self.present_time] = "롱진입"
             self.trade_set = False
         #매도
-        elif data <= first_price_list[idx-1]:
+        elif data < first_price_list[idx-1]:
             self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                     
             print("매도", data)
