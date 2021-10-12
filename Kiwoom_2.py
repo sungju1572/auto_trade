@@ -177,10 +177,20 @@ class Kiwoom(QAxWidget):
         #버튼 눌렀을때 거래시작
         if self.trade_start == True and self.trade_set == True and  hour < self.sell_time:
             
-            print(self.previous, self.next)
             
             self.first_price_range = self.first_price_list
-
+            
+            if self.constant_present_price == "":
+                self.constant_present_price  = self.get_comm_real_data(trcode, 10)
+                self.constant_present_price = self.constant_present_price[1:]
+              
+                if self.constant_present_price !="":
+                    self.first_price_range.append(self.constant_present_price)
+                    self.first_price_range = sorted(self.first_price_range)
+                    self.first_price_range = list(np.round(self.first_price_range, 2))
+                
+            print("처음 고정 현재가: ", self.constant_present_price)
+            print(self.constant_present_price)
             # 현재가 
             self.price =  self.get_comm_real_data(trcode, 10)
             self.price = self.price[1:]
@@ -189,19 +199,16 @@ class Kiwoom(QAxWidget):
             if self.price !="":
                 self.price = float(self.price)
                 
-                self.first_price_range.append(self.price)
-                self.first_price_range = sorted(self.first_price_range)
-                self.first_price_range = list(np.round(self.first_price_range, 2))
                 
                 print(self.time)
                 print("|현재가: ", self.price)
                 print("|초기거래 (시가기준 ):", self.trade_start )
                 print("|시가 : ", self.start_price)
-                print("|기준값 :", self.first_price_list[self.first_price_list.index(self.price)-1], "~", self.first_price_list[self.first_price_list.index(self.price)+1])
+                print("|기준값 :", self.first_price_range[self.first_price_range.index(self.constant_present_price)-1], "~", self.first_price_range[self.first_price_range.index(self.constant_present_price)+1])
                 print("")
                 
 
-                self.strategy_2(self.first_price_list, self.price)
+                self.strategy_2(self.first_price_range, self.price, self.constant_present_price)
                 
                 self.ui.present_price()
 
@@ -549,9 +556,9 @@ class Kiwoom(QAxWidget):
                 print("")
                 
                 
-    def strategy_2(self, first_price_list, present_price):
+    def strategy_2(self, first_price_list, present_price, constant_price):
         
-        idx = first_price_list.index(present_price)
+        idx = first_price_list.index(constant_price)
         data = present_price
        # print(first_price_list)        
         
