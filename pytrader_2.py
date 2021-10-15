@@ -11,8 +11,7 @@ class MyWindow(QMainWindow, form_class):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        
-        
+            
         self.trade_set = False
         
         self.trade_stocks_done = False
@@ -41,6 +40,9 @@ class MyWindow(QMainWindow, form_class):
         self.pushButton_4.clicked.connect(self.check_balance_2)
         self.pushButton_6.clicked.connect(self.set_real_data)
         self.pushButton_7.clicked.connect(self.trade_start)
+        self.pushButton_8.clicked.connect(self.start_price_list)
+        
+
         
         
 
@@ -219,6 +221,13 @@ class MyWindow(QMainWindow, form_class):
         code = self.lineEdit.text()
         self.kiwoom.set_input_value("종목코드", code)
         self.kiwoom.comm_rq_data("opt50003_req", "opt50003", 0, "1000")
+
+    def start_price_list(self):
+        code = self.lineEdit.text()
+        self.kiwoom.set_input_value("종목코드", code)
+        self.kiwoom.comm_rq_data("opt50001_req", "opt50001", 0, "1000")
+        
+        
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
