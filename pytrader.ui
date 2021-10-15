@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1076</width>
-    <height>859</height>
+    <width>1124</width>
+    <height>1223</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -593,7 +593,7 @@
      <rect>
       <x>20</x>
       <y>510</y>
-      <width>511</width>
+      <width>371</width>
       <height>301</height>
      </rect>
     </property>
@@ -777,19 +777,53 @@
       <string/>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_7">
-     <property name="geometry">
-      <rect>
-       <x>340</x>
-       <y>40</y>
-       <width>101</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>거래시작</string>
-     </property>
-    </widget>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_7">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>590</y>
+      <width>591</width>
+      <height>181</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_8">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>540</y>
+      <width>101</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>현재가 가져오기</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_7">
+    <property name="geometry">
+     <rect>
+      <x>410</x>
+      <y>540</y>
+      <width>101</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>시가 리스트 생성</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>400</x>
+      <y>790</y>
+      <width>681</width>
+      <height>361</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="graph_verticalLayout"/>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -797,7 +831,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1076</width>
+     <width>1124</width>
      <height>21</height>
     </rect>
    </property>
