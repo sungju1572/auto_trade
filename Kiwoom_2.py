@@ -8,7 +8,9 @@ import sqlite3
 from pytrader import *
 import datetime
 import numpy as np
-
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 TR_REQ_TIME_INTERVAL = 0.2
 
@@ -39,6 +41,11 @@ class Kiwoom(QAxWidget):
         self.trade_set = True
         self.constant_present_price = ""
         
+        
+        #그래프
+        self.fig = plt.Figure()
+        self.canvas = FigureCanvas(self.fig)
+
         
     #COM오브젝트 생성
     def _create_kiwoom_instance(self):
@@ -152,16 +159,6 @@ class Kiwoom(QAxWidget):
         if self.time != "":
             self.time =  datetime.datetime.strptime(date + self.time, "%Y-%m-%d %H%M%S")
 
-        #print("*|기준가격:", self.first_data)
-        #print("*|티커:", self.ticker)
-        #print("*|강제청산:", self.liquidation)
-        #print("*|상태:", self.state)
-        #print("*|시가:", self.first_price)
-        #print(self.trade_start)
-        #print(self.trade_set)
-            
-        
-        
         standard_time = float(self.ui.lineEdit_6.text())
 
 
@@ -188,9 +185,8 @@ class Kiwoom(QAxWidget):
                     self.first_price_range.append(self.constant_present_price)
                     self.first_price_range = sorted(self.first_price_range)
                     self.first_price_range = list(np.round(self.first_price_range, 2))
-                
-            print("처음 고정 현재가: ", self.constant_present_price)
-            print(self.constant_present_price)
+                    print(self.first_price_range)
+
             # 현재가 
             self.price =  self.get_comm_real_data(trcode, 10)
             self.price = self.price[1:]
@@ -204,7 +200,6 @@ class Kiwoom(QAxWidget):
                 print("|현재가: ", self.price)
                 print("|초기거래 (시가기준 ):", self.trade_start )
                 print("|시가 : ", self.start_price)
-                print("|기준값 :", self.first_price_range[self.first_price_range.index(self.constant_present_price)-1], "~", self.first_price_range[self.first_price_range.index(self.constant_present_price)+1])
                 print("")
                 
 
@@ -361,23 +356,28 @@ class Kiwoom(QAxWidget):
             self.ohlcv['close'].append(int(close))
             self.ohlcv['volume'].append(int(volume))
             
-            
+    #시가 가져와서 초기 리스트 만들기    
     def _opt50003(self, rqname, trcode):
         self.start_price = self._comm_get_data(trcode, "", rqname, 0, "시가")
-        self.first_price_list = list(np.arange(float(self.start_price) -100, float(self.start_price) + 100, self.ticker))
+        self.start_price = float(self.start_price[1:])
+        
+        self.first_price_list = np.arange(self.start_price - 10, self.start_price + 10, 0.5)
+        
+        ax = self.fig.add_subplot(111)
+        
+        for i in self.first_price_list:
+            ax.hlines(i, 0, 1, color='gray', linestyle='-', linewidth=2)
+            
+    
+        self.ui.graph_verticalLayout.addWidget(self.canvas)
         
         
-        """
-        while self.constant_present_price == "":
-            self.constant_present_price = self.get_comm_real_data(trcode, 10)
-            if self.constant_present_price !="":
-                break
-        self.first_price_list.append(self.constant_present_price)
-        self.first_price_list = sorted(self.first_price_list)
-        idx = self.first_price_list.index(self.constant_present_price)
-        self.previous = self.first_price_list[idx-1]
-        self.next = self.first_price_list[idx+1]
-        """
+        self.ui.lineEdit_7.setText(str(self.first_price_list))
+        
+        
+    #선물 현재가 가져오기(실시간x)
+    def _opt50001(self, rqname, trcode):
+        self.now_price = self._comm_get_data(trcode, "", rqname, 0, "현재가")
         
 
     #opw박스 초기화 (주식)
@@ -474,17 +474,9 @@ class Kiwoom(QAxWidget):
         
     
  ###
- 
- 
- 
     def first_price(self):
         self.set_input_value("종목코드", self.code)
         self.comm_rq_data("opt50003_req", "opt50003", 0, "1000")
-        
-        
-##        
-    def _opt50001(self, rqname, trcode):
-        print("connect")
         
         
     #전략
