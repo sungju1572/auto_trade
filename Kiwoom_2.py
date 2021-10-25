@@ -40,7 +40,8 @@ class Kiwoom(QAxWidget):
         self.trade_start = False
         self.trade_set = True
         self.constant_present_price = ""
-        
+        self.constant_present_price_idx_high = ""
+        self.constant_present_price_idx_low = ""
         
         #그래프
         self.fig = plt.Figure()
@@ -179,13 +180,16 @@ class Kiwoom(QAxWidget):
             
             if self.constant_present_price == "":
                 self.constant_present_price  = self.get_comm_real_data(trcode, 10)
-                self.constant_present_price = self.constant_present_price[1:]
+                self.constant_present_price = float(self.constant_present_price[1:])
               
                 if self.constant_present_price !="":
                     self.first_price_range.append(self.constant_present_price)
                     self.first_price_range = sorted(self.first_price_range)
                     self.first_price_range = list(np.round(self.first_price_range, 2))
-                    print(self.first_price_range)
+                    idx = self.first_price_range.index(self.constant_present_price)
+                    self.constant_present_price_idx_high = self.first_price_range[idx+1]
+                    self.constant_present_price_idx_low = self.first_price_range[idx-1]
+                    
 
             # 현재가 
             self.price =  self.get_comm_real_data(trcode, 10)
@@ -361,7 +365,7 @@ class Kiwoom(QAxWidget):
         self.start_price = self._comm_get_data(trcode, "", rqname, 0, "시가")
         self.start_price = float(self.start_price[1:])
         
-        self.first_price_list = np.arange(self.start_price - 10, self.start_price + 10, 0.5)
+        self.first_price_list = list(np.arange(self.start_price - 10, self.start_price + 10, 0.5))
         
         ax = self.fig.add_subplot(111)
         
@@ -372,7 +376,7 @@ class Kiwoom(QAxWidget):
         self.ui.graph_verticalLayout.addWidget(self.canvas)
         
         
-        self.ui.lineEdit_7.setText(str(self.first_price_list))
+        #self.ui.lineEdit_7.setText(str(self.first_price_list))
         
         
     #선물 현재가 가져오기(실시간x)
@@ -548,15 +552,14 @@ class Kiwoom(QAxWidget):
                 print("")
                 
                 
-    def strategy_2(self, first_price_list, present_price, constant_price):
+    def strategy_2(self, first_price_list, present_price):
         
-        idx = first_price_list.index(constant_price)
         data = present_price
        # print(first_price_list)        
         
         #초기 상태
         #매수
-        if data >= first_price_list[idx+1]:
+        if data >= first_price_list[self.constant_present_price_idx_high]:
             self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
    
             print("매수", data )
@@ -567,7 +570,7 @@ class Kiwoom(QAxWidget):
             self.trade_dic[self.present_time] = "롱진입"
             self.trade_set = False
         #매도
-        elif data < first_price_list[idx-1]:
+        elif data < first_price_list[self.constant_present_price_idx_low]:
             self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                     
             print("매도", data)
