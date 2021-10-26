@@ -207,7 +207,7 @@ class Kiwoom(QAxWidget):
                 print("")
                 
 
-                self.strategy_2(self.first_price_range, self.price, self.constant_present_price)
+                self.strategy_2(self.price)
                 
                 self.ui.present_price()
 
@@ -552,14 +552,14 @@ class Kiwoom(QAxWidget):
                 print("")
                 
                 
-    def strategy_2(self, first_price_list, present_price):
+    def strategy_2(self, present_price):
         
         data = present_price
        # print(first_price_list)        
         
         #초기 상태
         #매수
-        if data >= first_price_list[self.constant_present_price_idx_high]:
+        if data >= self.constant_present_price_idx_high:
             self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "2", "3", 1, "0", "")
    
             print("매수", data )
@@ -570,7 +570,7 @@ class Kiwoom(QAxWidget):
             self.trade_dic[self.present_time] = "롱진입"
             self.trade_set = False
         #매도
-        elif data < first_price_list[self.constant_present_price_idx_low]:
+        elif data < self.constant_present_price_idx_low:
             self.send_order_fo("send_order_fo_req", "0101", self.account, self.code, 1, "1", "3", 1, "0", "")
                     
             print("매도", data)
