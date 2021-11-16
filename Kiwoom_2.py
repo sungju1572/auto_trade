@@ -14,8 +14,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 TR_REQ_TIME_INTERVAL = 0.2
 
-
-
 class Kiwoom(QAxWidget):
     def __init__(self, ui):
         super().__init__()
