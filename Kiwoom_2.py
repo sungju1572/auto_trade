@@ -151,6 +151,7 @@ class Kiwoom(QAxWidget):
         
         #거래 시작할 타이밍(초기값 False)
         self.trade_start = self.ui.trade_set
+
         
         #강제청산할 시간 ui에서 가져오기
         self.sell_time = int(self.ui.comboBox_7.currentText())        
@@ -165,10 +166,11 @@ class Kiwoom(QAxWidget):
         #초기 기준값 입력받기 (여기서는 일단입력받고 strategy_2를통해 갱신)
         if self.first_data == "":
             self.first_data = self.get_comm_real_data(trcode, 10)
-            self.first_data = float(self.first_data[1:])
-            print("기준가격:" , self.first_data, end=" ")
-            print("상태: ", self.state)
-            print("")
+            if self.first_data != "":
+                self.first_data = float(self.first_data[1:])
+                print("기준가격:" , self.first_data, end=" ")
+                print("상태: ", self.state)
+                print("")
 
 
         #버튼 눌렀을때 거래시작
@@ -179,9 +181,10 @@ class Kiwoom(QAxWidget):
             
             if self.constant_present_price == "":
                 self.constant_present_price  = self.get_comm_real_data(trcode, 10)
-                self.constant_present_price = float(self.constant_present_price[1:])
+                
               
                 if self.constant_present_price !="":
+                    self.constant_present_price = float(self.constant_present_price[1:])
                     self.first_price_range.append(self.constant_present_price)
                     self.first_price_range = sorted(self.first_price_range)
                     self.first_price_range = list(np.round(self.first_price_range, 2))
