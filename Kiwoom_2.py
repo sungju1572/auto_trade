@@ -153,6 +153,7 @@ class Kiwoom(QAxWidget):
         self.trade_start = self.ui.trade_set
 
         
+
         #강제청산할 시간 ui에서 가져오기
         self.sell_time = int(self.ui.comboBox_7.currentText())        
         
