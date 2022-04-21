@@ -152,11 +152,9 @@ class Kiwoom(QAxWidget):
         #거래 시작할 타이밍(초기값 False)
         self.trade_start = self.ui.trade_set
 
-        
-
+    
         #강제청산할 시간 ui에서 가져오기
         self.sell_time = int(self.ui.comboBox_7.currentText())        
-        
         
         if self.time != "":
             self.time =  datetime.datetime.strptime(date + self.time, "%Y-%m-%d %H%M%S")
