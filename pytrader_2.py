@@ -92,7 +92,7 @@ class MyWindow(QMainWindow, form_class):
         num = self.spinBox.value()
         price = self.spinBox_2.value()
 
-        self.kiwoom.send_order_fo("send_order_fo_req", "0101", account, code, order_type_lookup[order_type], slbytp_lookup[slbytp], hoga_lookup[hoga], num, price, "")
+        self.kiwoom.send_order_fo("send_order_fo_req", "0102", account, code, order_type_lookup[order_type], slbytp_lookup[slbytp], hoga_lookup[hoga], num, price, "")
 
 
     #서버연결
@@ -216,7 +216,9 @@ class MyWindow(QMainWindow, form_class):
         self.tableWidget_2.resizeRowsToContents()
         
         
+        
     def trade_start(self):
+        print("--대기중--")
         self.trade_set = True
         code = self.lineEdit.text()
         self.kiwoom.set_input_value("종목코드", code)
