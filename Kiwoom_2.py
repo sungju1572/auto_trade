@@ -154,7 +154,8 @@ class Kiwoom(QAxWidget):
 
     
         #강제청산할 시간 ui에서 가져오기
-        self.sell_time = int(self.ui.comboBox_7.currentText())        
+        self.sell_time = int(self.ui.comboBox_7.currentText())    
+        
         
         if self.time != "":
             self.time =  datetime.datetime.strptime(date + self.time, "%Y-%m-%d %H%M%S")
@@ -211,8 +212,8 @@ class Kiwoom(QAxWidget):
                 self.strategy_2(self.price)
                 
                 self.ui.present_price()
+                
 
-        
         elif self.sell_time == 0 or hour < self.sell_time and hour >= standard_time and self.trade_set == False: 
 
             # 현재가 
@@ -226,7 +227,7 @@ class Kiwoom(QAxWidget):
             print("|거래량: ", self.trade_count)
             print("|티커: ", self.ticker)
             print("초기거래 (시가기준 ):", self.trade_start )
-            print(self.trade_dic)
+            print(list(self.trade_dic.keys())[-1], " ",list(self.trade_dic.values())[-1] )
             print("-----------------------------")
             print("")
             
@@ -254,7 +255,7 @@ class Kiwoom(QAxWidget):
                 print("장마무리")
                 self.state = "초기상태"
         else:
-            print("장시간이 아닙니다")
+            print("프로그램 시작버튼을 눌러주세요")
             print("현재시간 : ", self.present_time)
             
 
@@ -366,7 +367,9 @@ class Kiwoom(QAxWidget):
         self.start_price = self._comm_get_data(trcode, "", rqname, 0, "시가")
         self.start_price = float(self.start_price[1:])
         
-        self.first_price_list = list(np.arange(self.start_price - 10, self.start_price + 10, 0.5))
+        ticker = float(self.ui.lineEdit_4.text())
+        
+        self.first_price_list = list(np.arange(self.start_price - 10, self.start_price + 10, ticker))
         
         ax = self.fig.add_subplot(111)
         
@@ -557,8 +560,9 @@ class Kiwoom(QAxWidget):
     def strategy_2(self, present_price):
         
         data = present_price
-       # print(first_price_list)        
-        
+       # print(first_price_list)  
+        print("기준점 상 : ", self.constant_present_price_idx_high)
+        print("기준점 하 : ", self.constant_present_price_idx_low)              
         #초기 상태
         #매수
         if data >= self.constant_present_price_idx_high:
