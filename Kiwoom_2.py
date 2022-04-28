@@ -227,7 +227,6 @@ class Kiwoom(QAxWidget):
             print("|거래량: ", self.trade_count)
             print("|티커: ", self.ticker)
             print("초기거래 (시가기준 ):", self.trade_start )
-            print(list(self.trade_dic.keys())[-1], " ",list(self.trade_dic.values())[-1] )
             print("-----------------------------")
             print("")
             
