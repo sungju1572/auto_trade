@@ -160,6 +160,7 @@ class Kiwoom(QAxWidget):
         if self.time != "":
             self.time =  datetime.datetime.strptime(date + self.time, "%Y-%m-%d %H%M%S")
 
+        #기준시간 입력
         standard_time = float(self.ui.lineEdit_6.text())
 
 
@@ -173,7 +174,7 @@ class Kiwoom(QAxWidget):
                 print("")
 
 
-        #버튼 눌렀을때 거래시작
+        #버튼 눌렀을때 거래시작 (버튼이 눌리고, 초기 상태(싯가기준 범위가 안만들어져있고),  현재시간이 강제 청산시간보다 이를 때 조건 )
         if self.trade_start == True and self.trade_set == True and  hour < self.sell_time:
             
             
@@ -213,7 +214,7 @@ class Kiwoom(QAxWidget):
                 
                 self.ui.present_price()
                 
-
+        # 강제청산시간이 0 혹은 현재시간이 강제청산시간보다 이르면서, 현재시간이 기준시간보다 빠르고 strategy_2함수로 인해 초기상태가 False 일 때 조건
         elif self.sell_time == 0 or hour < self.sell_time and hour >= standard_time and self.trade_set == False: 
 
             # 현재가 
@@ -555,7 +556,7 @@ class Kiwoom(QAxWidget):
                 print("한단계 아랫단계 진입", date)
                 print("")
                 
-                
+    #시가 기준으로 만든 범위에 따라 현재가가 그 라인에 진입시 매도 or 매수         
     def strategy_2(self, present_price):
         
         data = present_price
