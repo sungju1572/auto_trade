@@ -5,7 +5,6 @@ from PyQt5.QtCore import *
 import time
 import pandas as pd
 import sqlite3
-#from pytrader import *
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
